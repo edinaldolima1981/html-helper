@@ -13,6 +13,8 @@ import DeviceDetail from "./pages/DeviceDetail";
 import WhatsApp from "./pages/WhatsApp";
 import Recharge from "./pages/Recharge";
 import Financial from "./pages/Financial";
+import TeamPage from "./pages/TeamPage";
+import SettingsPage from "./pages/SettingsPage";
 
 import Provisioning from "./pages/Provisioning";
 import Clients from "./pages/Clients";
@@ -117,6 +119,22 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><Financial /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/team"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><TeamPage /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><SettingsPage /></AppLayout>
                 </ProtectedRoute>
               }
             />
