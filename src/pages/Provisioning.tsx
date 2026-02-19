@@ -94,19 +94,25 @@ export default function Provisioning() {
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: equipData }, { data: clientsData }] = await Promise.all([
+    const [{ data: equipData }, { data: clientsData }, { data: ordersData }] = await Promise.all([
       supabase.from("equipment").select("*").order("created_at", { ascending: false }),
       supabase.from("clients").select("id, full_name, nickname, phone, city, address").order("full_name"),
+      supabase.from("service_orders").select("client_id").neq("status", "concluido"),
     ]);
 
     const equip = (equipData as Equipment[]) || [];
     setEquipment(equip);
 
+    // IDs de clientes com O.S. pendente
+    const clientsWithOS = new Set((ordersData || []).map((o: any) => o.client_id));
+
     const provisionedNames = new Set(
       equip.map((e) => e.client_name?.toLowerCase().trim()).filter(Boolean)
     );
     const unprovisioned = (clientsData as Client[] || []).filter(
-      (c) => !provisionedNames.has(c.full_name.toLowerCase().trim())
+      (c) =>
+        clientsWithOS.has(c.id) &&
+        !provisionedNames.has(c.full_name.toLowerCase().trim())
     );
     setUnprovisionedClients(unprovisioned);
     setLoading(false);
@@ -246,8 +252,8 @@ export default function Provisioning() {
           <div className="flex items-center gap-3 px-5 py-4 border-b bg-warning/5">
             <UserX className="h-5 w-5 text-warning" />
             <div>
-              <p className="font-semibold text-foreground">Clientes sem provisionamento</p>
-              <p className="text-xs text-muted-foreground">{unprovisionedClients.length} cliente(s) aguardando instalação de equipamento</p>
+              <p className="font-semibold text-foreground">Clientes com O.S. pendente</p>
+              <p className="text-xs text-muted-foreground">{unprovisionedClients.length} cliente(s) com ordem de serviço aguardando provisionamento</p>
             </div>
           </div>
           <div className="divide-y">
