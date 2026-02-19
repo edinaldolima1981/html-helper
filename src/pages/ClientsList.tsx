@@ -12,16 +12,22 @@ export default function ClientsList() {
   const [filter, setFilter] = useState<"all" | "online" | "offline">("all");
 
   const { data: clients, isLoading } = useQuery({
-    queryKey: ["clients-list"],
+    queryKey: ["clients-list-provisioned"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("full_name");
+      const [{ data: clientsData, error }, { data: equipData }] = await Promise.all([
+        supabase.from("clients").select("*").order("full_name"),
+        supabase.from("equipment").select("client_name"),
+      ]);
       if (error) throw error;
-      return data;
+      const provisionedNames = new Set(
+        (equipData || []).map((e: any) => e.client_name?.toLowerCase().trim()).filter(Boolean)
+      );
+      return (clientsData || []).filter(
+        (c: any) => provisionedNames.has(c.full_name.toLowerCase().trim())
+      );
     },
   });
 
-  // Simulate online/offline based on credits > 0 as a proxy (or random for demo)
-  // In a real system this would come from device/session data
   const clientsWithStatus = (clients || []).map((c) => ({
     ...c,
     isOnline: (c.credits as number) > 0,
