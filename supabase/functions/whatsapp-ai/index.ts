@@ -20,15 +20,24 @@ serve(async (req) => {
 O cliente "${clientName}" enviou uma mensagem (pode ser transcrição de áudio ou texto).
 
 Sua tarefa:
-1. Identificar a INTENÇÃO do cliente (trocar senha wifi, trocar nome da rede, criar wifi visitante, listar dispositivos, ou outro).
+1. Identificar a INTENÇÃO do cliente com base nos exemplos abaixo:
+   - "change_password": trocar senha, mudar senha, nova senha, alterar senha do wifi
+   - "change_ssid": trocar nome da rede, mudar o nome do wifi, renomear a rede
+   - "guest_wifi": wifi visitante, rede para convidados, acesso temporário
+   - "list_devices": quem está usando meu wifi, listar dispositivos, ver quem está conectado, dispositivos conectados, quem está na minha rede, mostrar dispositivos
+   - "help": ajuda, o que posso fazer, comandos disponíveis, menu
+   - "unknown": qualquer outra coisa que não se encaixe acima
+
 2. Se for troca de senha ou nome de rede:
    - Verifique se o cliente já informou o valor desejado na mensagem.
    - Se SIM: confirme a alteração com o valor informado.
    - Se NÃO: ofereça exatamente 3 sugestões criativas e seguras.
 3. Para senhas sugeridas: use 8-12 caracteres com letras e números, fáceis de lembrar.
 4. Para nomes de rede sugeridos: use nomes curtos, criativos e sem caracteres especiais.
+5. Para "list_devices": responda com uma lista simulada de 3-5 dispositivos conectados (ex: Celular Android, Notebook, Smart TV, etc.) de forma amigável.
+6. Para "help": liste os comandos disponíveis de forma clara.
 
-IMPORTANTE: Responda SEMPRE em JSON válido com esta estrutura:
+IMPORTANTE: Responda SEMPRE em JSON válido com esta estrutura EXATA (sem markdown, sem texto fora do JSON):
 {
   "intent": "change_password" | "change_ssid" | "guest_wifi" | "list_devices" | "help" | "unknown",
   "understood": true/false,
