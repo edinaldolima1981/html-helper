@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Users } from "lucide-react";
+import { formatPhone, normalizePhone } from "@/lib/phone";
 
 interface ClientForm {
   full_name: string;
@@ -63,7 +64,8 @@ export default function Clients() {
       toast({ title: "Preencha os campos obrigatórios", variant: "destructive" });
       return;
     }
-    createClient.mutate(form);
+    // Salva o telefone normalizado (formato internacional)
+    createClient.mutate({ ...form, phone: normalizePhone(form.phone) });
   };
 
   const update = (field: keyof ClientForm, value: string) => setForm(prev => ({ ...prev, [field]: value }));
@@ -96,7 +98,7 @@ export default function Clients() {
                 </div>
                 <div className="space-y-2">
                   <Label>Telefone *</Label>
-                  <Input value={form.phone} onChange={e => update("phone", e.target.value)} placeholder="(00) 00000-0000" />
+                  <Input value={formatPhone(form.phone)} onChange={e => update("phone", e.target.value)} placeholder="(11) 99999-9999" maxLength={16} />
                 </div>
                 <div className="space-y-2">
                   <Label>E-mail</Label>
