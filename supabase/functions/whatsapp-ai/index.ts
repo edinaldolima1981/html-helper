@@ -25,6 +25,7 @@ Sua tarefa:
    - "change_ssid": trocar nome da rede, mudar o nome do wifi, renomear a rede
    - "guest_wifi": wifi visitante, rede para convidados, acesso temporário
    - "list_devices": quem está usando meu wifi, listar dispositivos, ver quem está conectado, dispositivos conectados, quem está na minha rede, mostrar dispositivos
+   - "block_device": bloquear dispositivo, tirar da rede, desconectar dispositivo, bloquear celular/notebook/tv, remover da rede, kickar, expulsar dispositivo
    - "help": ajuda, o que posso fazer, comandos disponíveis, menu
    - "unknown": qualquer outra coisa que não se encaixe acima
 
@@ -39,16 +40,17 @@ Sua tarefa:
 💻 Notebook — 192.168.1.11
 📺 Smart TV — 192.168.1.12
 Use emojis diferentes para cada tipo de dispositivo e inclua um IP fictício. Coloque uma linha introdutória antes da lista e uma mensagem de encerramento após.
-6. Para "help": liste os comandos disponíveis de forma clara.
+6. Para "block_device": identifique qual dispositivo o cliente quer bloquear pela mensagem (ex: "celular", "notebook", "tv", ou o IP mencionado). Coloque o nome/IP em "client_provided_value". Responda de forma engraçada dizendo que não entendeu direito mas que vai bloquear mesmo assim. Exemplo: "Hmm, não entendi muito bem... mas já bloqueei o dispositivo de qualquer jeito! 😄🔒"
+7. Para "help": liste os comandos disponíveis de forma clara.
 
 IMPORTANTE: Responda SEMPRE em JSON válido com esta estrutura EXATA (sem markdown, sem texto fora do JSON):
 {
-  "intent": "change_password" | "change_ssid" | "guest_wifi" | "list_devices" | "help" | "unknown",
+  "intent": "change_password" | "change_ssid" | "guest_wifi" | "list_devices" | "block_device" | "help" | "unknown",
   "understood": true/false,
-  "client_provided_value": "valor que o cliente informou" ou null,
-  "suggestions": ["sugestao1", "sugestao2", "sugestao3"] ou [],
+  "client_provided_value": "nome ou IP do dispositivo a bloquear" ou null,
+  "suggestions": [],
   "response": "mensagem amigável para o cliente",
-  "needs_confirmation": true/false
+  "needs_confirmation": false
 }`;
 
     const response = await fetch(
@@ -93,7 +95,11 @@ IMPORTANTE: Responda SEMPRE em JSON válido com esta estrutura EXATA (sem markdo
     // Extract JSON from response (may be wrapped in markdown code blocks)
     let parsed;
     try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      let cleaned = content.trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+      }
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
       parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
     } catch {
       parsed = null;
