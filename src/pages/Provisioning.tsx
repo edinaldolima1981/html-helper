@@ -206,9 +206,6 @@ export default function Provisioning() {
             <SelectItem value="provisioning">Provisionando</SelectItem>
           </SelectContent>
         </Select>
-        <button onClick={() => openAdd()} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
-          <Plus className="h-4 w-4" /> Novo Equipamento
-        </button>
       </div>
 
       {/* Equipment List */}
