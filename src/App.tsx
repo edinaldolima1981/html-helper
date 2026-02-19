@@ -15,6 +15,7 @@ import Recharge from "./pages/Recharge";
 
 import Provisioning from "./pages/Provisioning";
 import Clients from "./pages/Clients";
+import ClientsList from "./pages/ClientsList";
 import Interested from "./pages/Interested";
 import ServiceOrderStatus from "./pages/ServiceOrderStatus";
 import NotFound from "./pages/NotFound";
@@ -91,6 +92,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><Interested /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients-list"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><ClientsList /></AppLayout>
                 </ProtectedRoute>
               }
             />
