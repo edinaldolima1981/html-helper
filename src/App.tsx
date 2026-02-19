@@ -9,6 +9,7 @@ import { AppLayout } from "@/components/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
+import DeviceDetail from "./pages/DeviceDetail";
 import WhatsApp from "./pages/WhatsApp";
 
 import Provisioning from "./pages/Provisioning";
@@ -49,6 +50,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><Devices /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/devices/:id"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><DeviceDetail /></AppLayout>
                 </ProtectedRoute>
               }
             />
