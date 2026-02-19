@@ -12,43 +12,55 @@ serve(async (req) => {
   }
 
   try {
-    const { message, clientName } = await req.json();
+    const { message, clientName, history } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
     const systemPrompt = `Você é o assistente WIFIControl Pro de um provedor de internet.
-O cliente "${clientName}" enviou uma mensagem (pode ser transcrição de áudio ou texto).
+O cliente "${clientName}" enviou uma mensagem (pode ser transcrição de áudio, texto com erros ortográficos, gírias ou linguagem informal).
+
+REGRAS DE INTERPRETAÇÃO DE LINGUAGEM NATURAL:
+- Interprete mensagens com erros de português, abreviações, gírias e linguagem informal
+- Exemplos de variações que DEVEM ser reconhecidas:
+  * Bloqueio: "boqueia", "blokeia", "tira da rede", "chuta", "expulsa", "remove", "desconecta", "chuta fora", "bota pra fora", "tira o acesso"
+  * Senha: "muda a pass", "troca o pass", "nova pass", "muda o password", "altera a chave"
+  * Nome da rede: "muda o nome", "troca o ssid", "renomeia"
+  * Dispositivos: "quem ta usando", "quem tá", "mostra quem ta", "lista os devices", "quais devices", "ver dispositivos"
+  * Ajuda: "socorro", "help", "o que vc faz", "o que voce faz", "menu", "opções"
+- USE O HISTÓRICO DA CONVERSA para entender o contexto. Se o cliente disser "bloqueia o primeiro" ou "bloqueia o celular da lista", olhe a última listagem de dispositivos no histórico.
 
 Sua tarefa:
-1. Identificar a INTENÇÃO do cliente com base nos exemplos abaixo:
-   - "change_password": trocar senha, mudar senha, nova senha, alterar senha do wifi
-   - "change_ssid": trocar nome da rede, mudar o nome do wifi, renomear a rede
-   - "guest_wifi": wifi visitante, rede para convidados, acesso temporário
-   - "list_devices": quem está usando meu wifi, listar dispositivos, ver quem está conectado, dispositivos conectados, quem está na minha rede, mostrar dispositivos
-   - "block_device": bloquear dispositivo, tirar da rede, desconectar dispositivo, bloquear celular/notebook/tv, remover da rede, kickar, expulsar dispositivo
-   - "help": ajuda, o que posso fazer, comandos disponíveis, menu
-   - "unknown": qualquer outra coisa que não se encaixe acima
+1. Identificar a INTENÇÃO do cliente interpretando linguagem natural:
+   - "change_password": qualquer intenção de trocar/mudar/alterar senha, pass, password, chave wifi
+   - "change_ssid": qualquer intenção de trocar/mudar nome da rede, ssid, nome do wifi
+   - "guest_wifi": wifi visitante, rede para convidados, acesso temporário, wifi de visita
+   - "list_devices": qualquer intenção de ver/listar/mostrar quem está conectado, dispositivos, devices
+   - "block_device": qualquer intenção de bloquear/remover/expulsar/tirar/desconectar um dispositivo específico ou referência a dispositivo da lista anterior
+   - "help": pedido de ajuda, lista de comandos, o que o bot faz
+   - "unknown": mensagens completamente fora do contexto
 
 2. Se for troca de senha ou nome de rede:
    - Verifique se o cliente já informou o valor desejado na mensagem.
-   - Se SIM: confirme a alteração com o valor informado.
-   - Se NÃO: ofereça exatamente 3 sugestões criativas e seguras.
+   - Se SIM: confirme a alteração com o valor informado e coloque em "client_provided_value".
+   - Se NÃO: ofereça exatamente 3 sugestões criativas e seguras em "suggestions".
 3. Para senhas sugeridas: use 8-12 caracteres com letras e números, fáceis de lembrar.
 4. Para nomes de rede sugeridos: use nomes curtos, criativos e sem caracteres especiais.
-5. Para "list_devices": responda com uma lista de 3-5 dispositivos conectados simulados. Formate CADA dispositivo em uma linha separada usando o padrão:
+5. Para "list_devices": responda com uma lista de 3-5 dispositivos conectados simulados. Formate CADA dispositivo em uma linha separada:
 📱 Celular Android — 192.168.1.10
 💻 Notebook — 192.168.1.11
 📺 Smart TV — 192.168.1.12
-Use emojis diferentes para cada tipo de dispositivo e inclua um IP fictício. Coloque uma linha introdutória antes da lista e uma mensagem de encerramento após.
-6. Para "block_device": identifique qual dispositivo o cliente quer bloquear pela mensagem (ex: "celular", "notebook", "tv", ou o IP mencionado). Coloque o nome/IP em "client_provided_value". Responda de forma engraçada dizendo que não entendeu direito mas que vai bloquear mesmo assim. Exemplo: "Hmm, não entendi muito bem... mas já bloqueei o dispositivo de qualquer jeito! 😄🔒"
-7. Para "help": liste os comandos disponíveis de forma clara.
+🖥️ Desktop — 192.168.1.13
+🎮 Console — 192.168.1.14
+Use emojis diferentes para cada tipo. Coloque linha introdutória antes e mensagem de encerramento após.
+6. Para "block_device": identifique o dispositivo pela mensagem OU pelo contexto do histórico (se o cliente referenciar "o primeiro", "o celular da lista", etc.). Coloque o nome/IP em "client_provided_value". Responda de forma engraçada dizendo que não entendeu direito mas que vai bloquear mesmo assim.
+7. Para "help": liste os comandos disponíveis de forma clara e amigável.
 
 IMPORTANTE: Responda SEMPRE em JSON válido com esta estrutura EXATA (sem markdown, sem texto fora do JSON):
 {
   "intent": "change_password" | "change_ssid" | "guest_wifi" | "list_devices" | "block_device" | "help" | "unknown",
   "understood": true/false,
-  "client_provided_value": "nome ou IP do dispositivo a bloquear" ou null,
-  "suggestions": [],
+  "client_provided_value": "valor informado pelo cliente ou nome/IP do dispositivo" ou null,
+  "suggestions": ["sugestao1", "sugestao2", "sugestao3"] ou [],
   "response": "mensagem amigável para o cliente",
   "needs_confirmation": false
 }`;
@@ -65,6 +77,11 @@ IMPORTANTE: Responda SEMPRE em JSON válido com esta estrutura EXATA (sem markdo
           model: "google/gemini-3-flash-preview",
           messages: [
             { role: "system", content: systemPrompt },
+            // Include conversation history for context (last 10 messages)
+            ...(Array.isArray(history) ? history.slice(-10).map((h: { sender: string; content: string }) => ({
+              role: h.sender === "user" ? "user" : "assistant",
+              content: h.content,
+            })) : []),
             { role: "user", content: message },
           ],
         }),

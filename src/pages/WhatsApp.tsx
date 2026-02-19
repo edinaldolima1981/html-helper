@@ -105,8 +105,10 @@ export default function WhatsApp() {
 
   const processWithAI = async (content: string): Promise<AiResponse | null> => {
     try {
+      // Send last 10 messages as history for context
+      const history = messages.slice(-10).map((m) => ({ sender: m.sender, content: m.content }));
       const { data, error } = await supabase.functions.invoke("whatsapp-ai", {
-        body: { message: content, clientName: selectedClient?.full_name || "Cliente" },
+        body: { message: content, clientName: selectedClient?.full_name || "Cliente", history },
       });
       if (error) throw error;
       return data as AiResponse;
