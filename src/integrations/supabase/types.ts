@@ -258,6 +258,59 @@ export type Database = {
         }
         Relationships: []
       }
+      provisioning_ips: {
+        Row: {
+          assigned_at: string
+          client_name: string | null
+          dns: string
+          equipment_id: string | null
+          gateway: string
+          host_index: number
+          id: string
+          ip_address: string
+          is_active: boolean
+          released_at: string | null
+          subnet: string
+          subnet_index: number
+        }
+        Insert: {
+          assigned_at?: string
+          client_name?: string | null
+          dns?: string
+          equipment_id?: string | null
+          gateway: string
+          host_index: number
+          id?: string
+          ip_address: string
+          is_active?: boolean
+          released_at?: string | null
+          subnet?: string
+          subnet_index?: number
+        }
+        Update: {
+          assigned_at?: string
+          client_name?: string | null
+          dns?: string
+          equipment_id?: string | null
+          gateway?: string
+          host_index?: number
+          id?: string
+          ip_address?: string
+          is_active?: boolean
+          released_at?: string | null
+          subnet?: string
+          subnet_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provisioning_ips_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_orders: {
         Row: {
           assigned_to: string | null
@@ -426,6 +479,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_next_provisioning_ip: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
