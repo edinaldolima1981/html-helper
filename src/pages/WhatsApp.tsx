@@ -13,6 +13,7 @@ const quickCommands = [
   { label: "Trocar Nome da Rede", command: "Quero mudar o nome da minha rede wifi" },
   { label: "WiFi Visitante", command: "Criar wifi visitante por 24h" },
   { label: "Listar Dispositivos", command: "Quem está usando meu wifi?" },
+  { label: "Bloquear Dispositivo", command: "Quero bloquear um dispositivo da minha rede" },
   { label: "Ajuda", command: "Ajuda" },
 ];
 
@@ -138,11 +139,19 @@ export default function WhatsApp() {
     let responseText: string;
     let suggestions: string[] = [];
     let intent: string = "unknown";
+    let blockedDevice: string | null = null;
 
     if (aiResult) {
       responseText = aiResult.response;
       suggestions = aiResult.suggestions || [];
       intent = aiResult.intent;
+
+      // Handle block_device: append confirmation message
+      if (intent === "block_device") {
+        blockedDevice = aiResult.client_provided_value || "dispositivo";
+        const blockConfirm = `\n\n🚫 Dispositivo bloqueado: ${blockedDevice}\n✅ Acesso removido da rede com sucesso!`;
+        responseText = aiResult.response + blockConfirm;
+      }
     } else {
       responseText = "Desculpe, não consegui processar seu comando. Tente novamente.";
     }
@@ -162,10 +171,13 @@ export default function WhatsApp() {
     setMessages((prev) => [...prev, systemMsg]);
 
     // Log activity
+    const actionLabel = intent === "block_device"
+      ? `Dispositivo bloqueado (IA): ${blockedDevice}`
+      : `Comando WhatsApp (IA): ${content}`;
     await supabase.from("activity_log").insert({
       user_id: user?.id,
       action: "Comando WhatsApp (IA)",
-      details: `${selectedClient.full_name}: ${content}`,
+      details: `${selectedClient.full_name}: ${actionLabel}`,
     });
 
     setLoading(false);
