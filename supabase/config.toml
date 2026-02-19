@@ -1,1 +1,4 @@
 project_id = "ogjncfhbicuahyejzvjo"
+
+[functions.whatsapp-ai]
+verify_jwt = false
