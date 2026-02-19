@@ -56,6 +56,7 @@ export type Database = {
           city: string
           cpf: string
           created_at: string
+          credits: number
           email: string | null
           full_name: string
           id: string
@@ -74,6 +75,7 @@ export type Database = {
           city: string
           cpf: string
           created_at?: string
+          credits?: number
           email?: string | null
           full_name: string
           id?: string
@@ -92,6 +94,7 @@ export type Database = {
           city?: string
           cpf?: string
           created_at?: string
+          credits?: number
           email?: string | null
           full_name?: string
           id?: string
@@ -105,6 +108,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      credit_transactions: {
+        Row: {
+          amount: number
+          client_id: string
+          created_at: string
+          id: string
+          payment_method: string
+          plan_name: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          client_id: string
+          created_at?: string
+          id?: string
+          payment_method?: string
+          plan_name: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          client_id?: string
+          created_at?: string
+          id?: string
+          payment_method?: string
+          plan_name?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_transactions_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       devices: {
         Row: {

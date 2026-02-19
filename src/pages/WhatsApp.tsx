@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { MessageSquare, Send, Phone, User, Tag, Search, Loader2 } from "lucide-react";
+import { MessageSquare, Send, Phone, User, Tag, Search, Loader2, AlertCircle, Zap, Star, Crown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { normalizePhone, formatPhone } from "@/lib/phone";
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +21,7 @@ interface Client {
   full_name: string;
   phone: string;
   nickname: string | null;
+  credits: number;
 }
 
 interface AiResponse {
@@ -41,22 +43,30 @@ interface ChatMessage {
   qrData?: string;
 }
 
+const rechargeePlans = [
+  { id: "basic", name: "Básico", price: 10, credits: 10, icon: Zap, color: "text-blue-500", bg: "bg-blue-500/10" },
+  { id: "plus", name: "Plus", price: 20, credits: 25, icon: Star, color: "text-amber-500", bg: "bg-amber-500/10" },
+  { id: "premium", name: "Premium", price: 30, credits: 45, icon: Crown, color: "text-purple-500", bg: "bg-purple-500/10" },
+];
+
 export default function WhatsApp() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [phoneSearch, setPhoneSearch] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [clientCredits, setClientCredits] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   // Buscar clientes cadastrados
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase.from("clients").select("id, full_name, phone, nickname").order("full_name");
-      setClients(data || []);
+      const { data } = await supabase.from("clients").select("id, full_name, phone, nickname, credits").order("full_name");
+      setClients((data || []).map(c => ({ ...c, credits: (c.credits as number) || 0 })));
     };
     fetchClients();
   }, []);
@@ -247,7 +257,7 @@ export default function WhatsApp() {
             {filteredClients.map((client) => (
               <button
                 key={client.id}
-                onClick={() => setSelectedClient(client)}
+                onClick={() => { setSelectedClient(client); setClientCredits(client.credits); setMessages([]); }}
                 className={`flex w-full items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent ${
                   selectedClient?.id === client.id ? "border-l-4 border-l-primary bg-accent" : ""
                 }`}
@@ -298,11 +308,46 @@ export default function WhatsApp() {
                 <p className="text-muted-foreground text-sm">← Selecione um cliente para iniciar</p>
               </div>
             )}
-            {selectedClient && messages.length === 0 && (
+            {selectedClient && messages.length === 0 && clientCredits > 0 && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-2xl rounded-bl-sm border bg-card px-4 py-2.5">
-                  <p className="text-sm">👋 Olá, {selectedClient.full_name.split(" ")[0]}! Sou o WIFIControl Pro. Mande sua mensagem por texto ou voz que eu entendo!</p>
+                  <p className="text-sm">👋 Olá, {selectedClient.full_name.split(" ")[0]}! Sou o WIFIControl Pro. Você tem <strong>{clientCredits} créditos</strong>. Mande sua mensagem!</p>
                   <p className="mt-1 text-xs text-muted-foreground">Agora</p>
+                </div>
+              </div>
+            )}
+            {selectedClient && clientCredits <= 0 && (
+              <div className="space-y-4">
+                <div className="flex justify-start">
+                  <div className="max-w-[90%] rounded-2xl rounded-bl-sm border bg-card px-4 py-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AlertCircle className="h-5 w-5 text-destructive" />
+                      <p className="text-sm font-semibold text-destructive">Sem créditos disponíveis</p>
+                    </div>
+                    <p className="text-sm text-foreground">
+                      {selectedClient.full_name.split(" ")[0]}, você não possui créditos para usar os comandos. Faça uma recarga para continuar! 👇
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">Agora</p>
+                  </div>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3 px-2">
+                  {rechargeePlans.map((plan) => {
+                    const Icon = plan.icon;
+                    return (
+                      <button
+                        key={plan.id}
+                        onClick={() => navigate(`/recharge?clientId=${selectedClient.id}&clientName=${encodeURIComponent(selectedClient.full_name)}`)}
+                        className={`rounded-xl border ${plan.bg} p-4 text-center transition-all hover:scale-[1.03] hover:shadow-md`}
+                      >
+                        <div className={`mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-card`}>
+                          <Icon className={`h-5 w-5 ${plan.color}`} />
+                        </div>
+                        <p className="font-bold text-foreground">{plan.name}</p>
+                        <p className="text-xl font-bold text-foreground">R$ {plan.price}<span className="text-sm font-normal text-muted-foreground">,00</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">{plan.credits} créditos</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
