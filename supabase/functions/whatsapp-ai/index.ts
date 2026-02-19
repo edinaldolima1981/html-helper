@@ -34,7 +34,11 @@ Sua tarefa:
    - Se NÃO: ofereça exatamente 3 sugestões criativas e seguras.
 3. Para senhas sugeridas: use 8-12 caracteres com letras e números, fáceis de lembrar.
 4. Para nomes de rede sugeridos: use nomes curtos, criativos e sem caracteres especiais.
-5. Para "list_devices": responda com uma lista simulada de 3-5 dispositivos conectados (ex: Celular Android, Notebook, Smart TV, etc.) de forma amigável.
+5. Para "list_devices": responda com uma lista de 3-5 dispositivos conectados simulados. Formate CADA dispositivo em uma linha separada usando o padrão:
+📱 Celular Android — 192.168.1.10
+💻 Notebook — 192.168.1.11
+📺 Smart TV — 192.168.1.12
+Use emojis diferentes para cada tipo de dispositivo e inclua um IP fictício. Coloque uma linha introdutória antes da lista e uma mensagem de encerramento após.
 6. Para "help": liste os comandos disponíveis de forma clara.
 
 IMPORTANTE: Responda SEMPRE em JSON válido com esta estrutura EXATA (sem markdown, sem texto fora do JSON):
