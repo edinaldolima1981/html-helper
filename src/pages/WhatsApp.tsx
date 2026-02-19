@@ -5,6 +5,7 @@ import { MessageSquare, Send, Phone, User, Tag, Search, Loader2 } from "lucide-r
 import { Input } from "@/components/ui/input";
 import { normalizePhone, formatPhone } from "@/lib/phone";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 const quickCommands = [
   { label: "Trocar Senha", command: "Quero trocar a senha do meu wifi" },
@@ -37,6 +38,7 @@ interface ChatMessage {
   created_at: string;
   suggestions?: string[];
   intent?: string;
+  qrData?: string;
 }
 
 export default function WhatsApp() {
@@ -157,12 +159,25 @@ export default function WhatsApp() {
 
     await supabase.from("whatsapp_messages").insert({ sender: "user", content: confirmMsg, is_command: true });
 
-    const successText =
-      intent === "change_password"
-        ? `✅ Senha WiFi alterada com sucesso!\nNova senha: **${suggestion}**\nTodos os dispositivos precisarão reconectar.`
-        : intent === "change_ssid"
-        ? `✅ Nome da rede alterado com sucesso!\nNovo nome: **${suggestion}**\nTodos os dispositivos precisarão reconectar.`
-        : `✅ Ação confirmada: ${suggestion}`;
+    // Fetch current wifi settings for QR code generation
+    const { data: wifiData } = await supabase.from("wifi_settings").select("ssid, password").limit(1).single();
+    const currentSsid = wifiData?.ssid || "MinhaRede";
+    const currentPassword = wifiData?.password || "12345678";
+
+    let successText: string;
+    let qrData: string | undefined;
+
+    if (intent === "change_password") {
+      const ssid = currentSsid;
+      qrData = `WIFI:T:WPA;S:${ssid};P:${suggestion};;`;
+      successText = `✅ Senha WiFi alterada com sucesso!\n\n📶 Rede: ${ssid}\n🔑 Nova senha: ${suggestion}\n\nTodos os dispositivos precisarão reconectar.\nEscaneie o QR Code abaixo para conectar:`;
+    } else if (intent === "change_ssid") {
+      const password = currentPassword;
+      qrData = `WIFI:T:WPA;S:${suggestion};P:${password};;`;
+      successText = `✅ Nome da rede alterado com sucesso!\n\n📶 Nova rede: ${suggestion}\n🔑 Senha: ${password}\n\nTodos os dispositivos precisarão reconectar.\nEscaneie o QR Code abaixo para conectar:`;
+    } else {
+      successText = `✅ Ação confirmada: ${suggestion}`;
+    }
 
     await supabase.from("whatsapp_messages").insert({ sender: "system", content: successText });
 
@@ -171,6 +186,7 @@ export default function WhatsApp() {
       sender: "system",
       content: successText,
       created_at: new Date().toISOString(),
+      qrData,
     };
     setMessages((prev) => [...prev, sysMsg]);
 
@@ -302,6 +318,12 @@ export default function WhatsApp() {
                       }`}
                     >
                       {m.content}
+                      {m.qrData && (
+                        <div className="mt-3 flex flex-col items-center gap-2 rounded-xl bg-white p-4">
+                          <QRCodeSVG value={m.qrData} size={180} level="M" />
+                          <p className="text-xs text-muted-foreground">Escaneie para conectar ao WiFi</p>
+                        </div>
+                      )}
                       <p className={`mt-1 text-[10px] ${m.sender === "user" ? "text-white/60" : "text-muted-foreground"}`}>
                         {new Date(m.created_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
                       </p>
