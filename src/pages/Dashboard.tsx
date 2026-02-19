@@ -1,19 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Terminal, Monitor, ShieldBan, Wifi, AlertTriangle, Clock, WifiOff } from "lucide-react";
+import { MessageSquare, Smartphone, ShieldAlert, Wifi, AlertTriangle, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
-  const { user, isAdmin } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [devices, setDevices] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
   const [wifiSettings, setWifiSettings] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     const [devRes, actRes, wifiRes] = await Promise.all([
@@ -24,165 +20,133 @@ export default function Dashboard() {
     setDevices(devRes.data || []);
     setActivities(actRes.data || []);
     setWifiSettings(wifiRes.data);
-    setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
   const totalDevices = devices.length;
   const blocked = devices.filter((d) => d.status === "blocked").length;
-  const connected = devices.filter((d) => d.status === "connected").length;
 
   const handlePanicMode = async () => {
-    const { error } = await supabase
-      .from("devices")
-      .update({ status: "blocked" })
-      .neq("status", "blocked");
-    if (!error) {
-      await supabase.from("activity_log").insert({
-        user_id: user?.id,
-        action: "Modo Pânico ativado",
-        details: "Todos os dispositivos foram bloqueados",
-      });
-      toast({ title: "🚨 Modo Pânico", description: "Todos os dispositivos foram bloqueados." });
-      fetchData();
-    }
+    await supabase.from("devices").update({ status: "blocked" }).neq("status", "blocked");
+    await supabase.from("activity_log").insert({
+      user_id: user?.id, action: "Modo Pânico ativado", details: "Todos os dispositivos foram bloqueados",
+    });
+    toast({ title: "🚨 Modo Pânico", description: "Todos os dispositivos foram bloqueados." });
+    fetchData();
   };
 
   const handleGuestWifi = async () => {
     if (!wifiSettings) return;
-    const { error } = await supabase
-      .from("wifi_settings")
-      .update({ guest_enabled: !wifiSettings.guest_enabled })
-      .eq("id", wifiSettings.id);
-    if (!error) {
-      await supabase.from("activity_log").insert({
-        user_id: user?.id,
-        action: wifiSettings.guest_enabled ? "WiFi Visitante desativado" : "WiFi Visitante ativado",
-      });
-      toast({ title: "WiFi Visitante", description: wifiSettings.guest_enabled ? "Desativado" : "Ativado com sucesso" });
-      fetchData();
-    }
+    await supabase.from("wifi_settings").update({ guest_enabled: !wifiSettings.guest_enabled }).eq("id", wifiSettings.id);
+    await supabase.from("activity_log").insert({
+      user_id: user?.id, action: wifiSettings.guest_enabled ? "WiFi Visitante desativado" : "WiFi Visitante ativado",
+    });
+    toast({ title: "WiFi Visitante", description: wifiSettings.guest_enabled ? "Desativado" : "Ativado com sucesso" });
+    fetchData();
   };
 
   const stats = [
-    { label: "Comandos Totais", value: activities.length.toString(), icon: Terminal, color: "text-primary" },
-    { label: "Dispositivos", value: totalDevices.toString(), icon: Monitor, color: "text-success" },
-    { label: "Bloqueados", value: blocked.toString(), icon: ShieldBan, color: "text-destructive" },
-    { label: "Conectados", value: connected.toString(), icon: Wifi, color: "text-primary" },
+    { label: "Comandos Totais", value: activities.length.toString(), icon: MessageSquare, bg: "bg-info/10", iconColor: "text-info" },
+    { label: "Dispositivos", value: totalDevices.toString(), icon: Smartphone, bg: "bg-purple-50", iconColor: "text-purple-600" },
+    { label: "Bloqueados", value: blocked.toString(), icon: ShieldAlert, bg: "bg-destructive/10", iconColor: "text-destructive" },
+    { label: "Status WiFi", value: "Online", icon: Wifi, bg: "bg-success/10", iconColor: "text-success", valueColor: "text-success" },
   ];
 
   return (
     <div className="space-y-6">
       {/* Welcome banner */}
-      <div className="rounded-xl bg-gradient-to-r from-[hsl(var(--gradient-start))] to-[hsl(var(--gradient-end))] p-6 text-white">
-        <h1 className="text-2xl font-bold">Bem-vindo ao WIFIControl Pro</h1>
-        <p className="mt-1 text-sm text-white/80">Gerencie sua rede WiFi com controle total.</p>
+      <div className="gradient-bg rounded-2xl p-6 text-white">
+        <h2 className="text-2xl font-bold mb-2">Bem-vindo ao WIFIControl Pro!</h2>
+        <p className="text-white/80">Controle sua rede WiFi de forma simples e rápida através do WhatsApp.</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((s) => (
-          <Card key={s.label} className="transition-shadow hover:shadow-md">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className={`rounded-lg bg-accent p-2.5 ${s.color}`}>
-                <s.icon className="h-5 w-5" />
-              </div>
+          <div key={s.label} className="rounded-xl border bg-card p-5 card-hover">
+            <div className="flex items-start justify-between">
               <div>
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
+                <p className="text-sm text-muted-foreground mb-1">{s.label}</p>
+                <p className={`text-2xl font-bold ${s.valueColor || "text-foreground"}`}>{s.value}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${s.bg}`}>
+                <s.icon className={`h-5 w-5 ${s.iconColor}`} />
+              </div>
+            </div>
+          </div>
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* Quick Actions Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* WiFi Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Wifi className="h-4 w-4 text-primary" />
-              Status do WiFi
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg bg-accent/50 p-3">
-              <div>
-                <p className="text-sm font-medium">{wifiSettings?.ssid || "..."}</p>
-                <p className="text-xs text-muted-foreground">Rede Principal</p>
-              </div>
-              <Badge variant="default" className="bg-success">Ativa</Badge>
+        <div className="rounded-xl border bg-card p-5">
+          <h3 className="font-semibold text-foreground mb-4">Status do WiFi</h3>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="h-3 w-3 rounded-full bg-success" />
+            <span className="font-medium text-foreground">Online</span>
+          </div>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Rede Principal</span>
+              <span className="font-medium">{wifiSettings?.ssid || "..."}</span>
             </div>
-            <div className="flex items-center justify-between rounded-lg bg-accent/50 p-3">
-              <div>
-                <p className="text-sm font-medium">{wifiSettings?.guest_ssid || "Visitante"}</p>
-                <p className="text-xs text-muted-foreground">Rede Visitante</p>
-              </div>
-              <Badge variant={wifiSettings?.guest_enabled ? "default" : "secondary"}>
-                {wifiSettings?.guest_enabled ? "Ativa" : "Inativa"}
-              </Badge>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Rede Visitante</span>
+              <span className={wifiSettings?.guest_enabled ? "font-medium" : "text-muted-foreground"}>
+                {wifiSettings?.guest_enabled ? wifiSettings?.guest_ssid : "Inativa"}
+              </span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              Ações Rápidas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button
-              variant="destructive"
-              className="w-full justify-start gap-2"
-              onClick={handlePanicMode}
-            >
-              <WifiOff className="h-4 w-4" />
-              Modo Pânico — Bloquear Todos
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start gap-2"
-              onClick={handleGuestWifi}
-            >
-              <Wifi className="h-4 w-4" />
-              {wifiSettings?.guest_enabled ? "Desativar" : "Ativar"} WiFi Visitante
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border bg-card p-5">
+          <h3 className="font-semibold text-foreground mb-4">Ações Rápidas</h3>
+          <button
+            onClick={handlePanicMode}
+            className="mb-2 flex w-full items-center gap-3 rounded-lg bg-destructive/10 px-4 py-3 text-destructive transition-colors hover:bg-destructive/20"
+          >
+            <AlertTriangle className="h-5 w-5" />
+            <span>Ativar Modo Pânico</span>
+          </button>
+          <button
+            onClick={handleGuestWifi}
+            className="flex w-full items-center gap-3 rounded-lg bg-info/10 px-4 py-3 text-info transition-colors hover:bg-info/20"
+          >
+            <Wifi className="h-5 w-5" />
+            <span>{wifiSettings?.guest_enabled ? "Desativar" : "Criar"} WiFi Visitante</span>
+          </button>
+        </div>
       </div>
 
       {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Clock className="h-4 w-4 text-primary" />
-            Atividade Recente
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {activities.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma atividade registrada.</p>
-          ) : (
-            <div className="space-y-2">
-              {activities.map((a) => (
-                <div key={a.id} className="flex items-center justify-between rounded-lg border p-3">
-                  <div>
-                    <p className="text-sm font-medium">{a.action}</p>
-                    {a.details && <p className="text-xs text-muted-foreground">{a.details}</p>}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(a.created_at).toLocaleString("pt-BR")}
-                  </span>
+      <div className="overflow-hidden rounded-xl border bg-card">
+        <div className="border-b px-5 py-4">
+          <h3 className="font-semibold text-foreground">Atividade Recente</h3>
+        </div>
+        {activities.length === 0 ? (
+          <div className="px-5 py-8 text-center text-muted-foreground">
+            <Clock className="mx-auto mb-3 h-12 w-12 text-border" />
+            <p>Nenhuma atividade recente</p>
+          </div>
+        ) : (
+          <div className="divide-y">
+            {activities.map((a) => (
+              <div key={a.id} className="flex items-center justify-between px-5 py-3">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{a.action}</p>
+                  {a.details && <p className="text-xs text-muted-foreground">{a.details}</p>}
                 </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {new Date(a.created_at).toLocaleString("pt-BR")}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
