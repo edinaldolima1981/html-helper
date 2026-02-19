@@ -1,4 +1,4 @@
-import { LayoutDashboard, Smartphone, MessageSquare, Settings, LogOut, Wifi } from "lucide-react";
+import { LayoutDashboard, Server, Smartphone, MessageSquare, Settings, LogOut, Wifi } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -15,6 +15,7 @@ import {
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Provisionamento", url: "/provisioning", icon: Server },
   { title: "Dispositivos", url: "/devices", icon: Smartphone },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageSquare },
   { title: "Configurações", url: "/settings", icon: Settings },
