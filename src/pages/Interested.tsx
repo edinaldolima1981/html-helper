@@ -25,16 +25,21 @@ export default function Interested() {
   const { data: clients, isLoading } = useQuery({
     queryKey: ["clients-unprovisioned"],
     queryFn: async () => {
-      const [{ data: clientsData, error }, { data: equipData }] = await Promise.all([
+      const [{ data: clientsData, error }, { data: equipData }, { data: ordersData }] = await Promise.all([
         supabase.from("clients").select("*").order("created_at", { ascending: false }),
         supabase.from("equipment").select("client_name"),
+        supabase.from("service_orders").select("client_id"),
       ]);
       if (error) throw error;
       const provisionedNames = new Set(
         (equipData || []).map((e: any) => e.client_name?.toLowerCase().trim()).filter(Boolean)
       );
+      // Clientes que já têm O.S. saem da lista de Interessados
+      const clientsWithOS = new Set((ordersData || []).map((o: any) => o.client_id));
       return (clientsData || []).filter(
-        (c: any) => !provisionedNames.has(c.full_name.toLowerCase().trim())
+        (c: any) =>
+          !provisionedNames.has(c.full_name.toLowerCase().trim()) &&
+          !clientsWithOS.has(c.id)
       );
     },
   });
