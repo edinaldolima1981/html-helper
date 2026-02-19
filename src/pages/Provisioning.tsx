@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Server, Plus, Search, Wifi, WifiOff, Signal, Edit2, Trash2, RefreshCw, Settings2, UserX,
+  Server, Plus, Search, Wifi, WifiOff, Signal, Edit2, Trash2, RefreshCw,
+  Settings2, UserX, FileCode2, Copy, Check, Network,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -38,10 +39,39 @@ type Client = {
   address: string;
 };
 
+type IpInfo = {
+  ip: string;
+  gateway: string;
+  subnet: string;
+  subnet_index: number;
+  host_index: number;
+  mask: string;
+};
+
 const emptyForm = {
   name: "", type: "ONU", model: "", serial_number: "", mac_address: "",
   ip_address: "", status: "offline", firmware: "", location: "", client_name: "", notes: "",
 };
+
+function generateMikrotikScript(client: Client, ipInfo: IpInfo): string {
+  const hostname = client.full_name.replace(/\s+/g, "-").toLowerCase().replace(/[^a-z0-9-]/g, "");
+  return `/ip address
+add address=${ipInfo.ip}/24 interface=ether1 comment="WAN - ${client.full_name}"
+
+/ip route
+add dst-address=0.0.0.0/0 gateway=${ipInfo.gateway} comment="Gateway padrao"
+
+/ip dns
+set servers=8.8.8.8,8.8.4.4 allow-remote-requests=yes
+
+/system identity
+set name="${hostname}"
+
+/tool netwatch
+add host=${ipInfo.gateway} interval=30s up-script="" down-script=""
+
+:log info "Provisionamento OK - ${client.full_name} - IP: ${ipInfo.ip}"`;
+}
 
 export default function Provisioning() {
   const { toast } = useToast();
@@ -52,9 +82,15 @@ export default function Provisioning() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [scriptDialogOpen, setScriptDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedEquip, setSelectedEquip] = useState<Equipment | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [scriptClient, setScriptClient] = useState<Client | null>(null);
+  const [scriptContent, setScriptContent] = useState("");
+  const [scriptIpInfo, setScriptIpInfo] = useState<IpInfo | null>(null);
+  const [generatingScript, setGeneratingScript] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -66,7 +102,6 @@ export default function Provisioning() {
     const equip = (equipData as Equipment[]) || [];
     setEquipment(equip);
 
-    // Clientes cujo nome não aparece em nenhum equipamento
     const provisionedNames = new Set(
       equip.map((e) => e.client_name?.toLowerCase().trim()).filter(Boolean)
     );
@@ -91,6 +126,7 @@ export default function Provisioning() {
     setForm({ ...emptyForm, client_name: clientName || "" });
     setDialogOpen(true);
   };
+
   const openEdit = (e: Equipment) => {
     setEditingId(e.id);
     setForm({
@@ -106,7 +142,14 @@ export default function Provisioning() {
       toast({ title: "Erro", description: "Nome e MAC são obrigatórios.", variant: "destructive" });
       return;
     }
-    const payload = { ...form, ip_address: form.ip_address || null, firmware: form.firmware || null, location: form.location || null, client_name: form.client_name || null, notes: form.notes || null };
+    const payload = {
+      ...form,
+      ip_address: form.ip_address || null,
+      firmware: form.firmware || null,
+      location: form.location || null,
+      client_name: form.client_name || null,
+      notes: form.notes || null,
+    };
     if (editingId) {
       await supabase.from("equipment").update(payload).eq("id", editingId);
       toast({ title: "Equipamento atualizado" });
@@ -127,6 +170,46 @@ export default function Provisioning() {
   const handleReboot = async (e: Equipment) => {
     toast({ title: "Comando enviado", description: `Reboot solicitado para ${e.name}` });
     await supabase.from("activity_log").insert({ action: `Reboot: ${e.name}`, details: `Serial: ${e.serial_number}` });
+  };
+
+  const handleGenerateScript = async (client: Client) => {
+    setGeneratingScript(true);
+    setScriptClient(client);
+    setScriptDialogOpen(true);
+    setCopied(false);
+
+    try {
+      // Chama a função do banco para obter o próximo IP
+      const { data, error } = await supabase.rpc("get_next_provisioning_ip");
+      if (error) throw error;
+
+      const ipInfo = data as IpInfo;
+
+      // Registra o IP como reservado
+      await supabase.from("provisioning_ips" as any).insert({
+        client_name: client.full_name,
+        ip_address: ipInfo.ip,
+        gateway: ipInfo.gateway,
+        subnet: ipInfo.subnet,
+        subnet_index: ipInfo.subnet_index,
+        host_index: ipInfo.host_index,
+      });
+
+      setScriptIpInfo(ipInfo);
+      setScriptContent(generateMikrotikScript(client, ipInfo));
+    } catch (err: any) {
+      toast({ title: "Erro ao gerar script", description: err.message, variant: "destructive" });
+      setScriptDialogOpen(false);
+    } finally {
+      setGeneratingScript(false);
+    }
+  };
+
+  const handleCopyScript = () => {
+    navigator.clipboard.writeText(scriptContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+    toast({ title: "Script copiado!", description: "Cole no terminal da RB." });
   };
 
   const statusColor: Record<string, string> = {
@@ -179,12 +262,22 @@ export default function Provisioning() {
                     <p className="text-xs text-muted-foreground">{formatPhone(c.phone)} • {c.city}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => openAdd(c.full_name)}
-                  className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-sm text-primary font-medium hover:bg-primary/20 transition-colors shrink-0"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Provisionar
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {/* Botão Gerar Script */}
+                  <button
+                    onClick={() => handleGenerateScript(c)}
+                    className="flex items-center gap-2 rounded-lg bg-secondary/80 border border-border px-3 py-1.5 text-sm text-foreground font-medium hover:bg-secondary transition-colors"
+                  >
+                    <FileCode2 className="h-3.5 w-3.5 text-primary" /> Gerar Script
+                  </button>
+                  {/* Botão Provisionar */}
+                  <button
+                    onClick={() => openAdd(c.full_name)}
+                    className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-sm text-primary font-medium hover:bg-primary/20 transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Provisionar
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -262,6 +355,91 @@ export default function Provisioning() {
           </div>
         )}
       </div>
+
+      {/* ── Script Dialog ──────────────────────────────────────────── */}
+      <Dialog open={scriptDialogOpen} onOpenChange={setScriptDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileCode2 className="h-5 w-5 text-primary" />
+              Script de Provisionamento
+            </DialogTitle>
+          </DialogHeader>
+
+          {generatingScript ? (
+            <div className="flex flex-col items-center justify-center py-10 gap-3 text-muted-foreground">
+              <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+              <p>Gerando script e reservando IP...</p>
+            </div>
+          ) : scriptIpInfo && scriptClient ? (
+            <div className="space-y-4">
+              {/* Resumo do IP */}
+              <div className="rounded-lg border bg-muted/40 p-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">IP Atribuído</p>
+                  <p className="font-mono font-semibold text-primary">{scriptIpInfo.ip}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Gateway</p>
+                  <p className="font-mono font-medium">{scriptIpInfo.gateway}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Máscara</p>
+                  <p className="font-mono font-medium">{scriptIpInfo.mask}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-0.5">Faixa</p>
+                  <p className="font-mono font-medium">{scriptIpInfo.subnet}</p>
+                </div>
+              </div>
+
+              {/* Info do cliente */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Network className="h-4 w-4" />
+                <span>Cliente: <strong className="text-foreground">{scriptClient.full_name}</strong> — {scriptClient.city}</span>
+              </div>
+
+              {/* Script */}
+              <div className="relative">
+                <pre className="rounded-lg bg-muted border text-xs font-mono p-4 overflow-x-auto whitespace-pre leading-relaxed max-h-72 overflow-y-auto">
+                  {scriptContent}
+                </pre>
+                <button
+                  onClick={handleCopyScript}
+                  className={`absolute top-3 right-3 flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all ${
+                    copied
+                      ? "bg-success/20 text-success"
+                      : "bg-background border hover:bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  {copied ? "Copiado!" : "Copiar"}
+                </button>
+              </div>
+
+              <p className="text-xs text-muted-foreground bg-warning/10 rounded-lg px-3 py-2 border border-warning/20">
+                ⚡ Este script é para <strong>MikroTik RouterOS</strong>. Cole no terminal da RB via SSH ou Winbox → Terminal. O IP <strong>{scriptIpInfo.ip}</strong> foi reservado exclusivamente para <strong>{scriptClient.full_name}</strong>.
+              </p>
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setScriptDialogOpen(false)}
+                  className="px-4 py-2 rounded-lg border hover:bg-muted transition-colors text-sm"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={handleCopyScript}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors text-sm"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  {copied ? "Copiado!" : "Copiar Script"}
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
