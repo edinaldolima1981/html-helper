@@ -12,6 +12,7 @@ import Devices from "./pages/Devices";
 import DeviceDetail from "./pages/DeviceDetail";
 import WhatsApp from "./pages/WhatsApp";
 import Recharge from "./pages/Recharge";
+import Financial from "./pages/Financial";
 
 import Provisioning from "./pages/Provisioning";
 import Clients from "./pages/Clients";
@@ -108,6 +109,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><ServiceOrderStatus /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/financial"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><Financial /></AppLayout>
                 </ProtectedRoute>
               }
             />

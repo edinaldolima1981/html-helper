@@ -1,4 +1,4 @@
-import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact } from "lucide-react";
+import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact, TrendingUp } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -20,6 +20,7 @@ const navItems = [
   { title: "Interessados", url: "/interested", icon: Users },
   { title: "Clientes", url: "/clients-list", icon: Contact },
   { title: "Status da O.S.", url: "/service-orders", icon: ClipboardList },
+  { title: "Financeiro", url: "/financial", icon: TrendingUp },
   { title: "Dispositivos", url: "/devices", icon: Smartphone },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageSquare },
 ];
