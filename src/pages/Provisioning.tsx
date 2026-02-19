@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Server, Plus, Search, Wifi, WifiOff, Signal, Edit2, Trash2, X, RefreshCw, Settings2,
+  Server, Plus, Search, Wifi, WifiOff, Signal, Edit2, Trash2, RefreshCw, Settings2, UserX,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatPhone } from "@/lib/phone";
 
 type Equipment = {
   id: string;
@@ -28,6 +29,15 @@ type Equipment = {
   updated_at: string;
 };
 
+type Client = {
+  id: string;
+  full_name: string;
+  nickname: string | null;
+  phone: string;
+  city: string;
+  address: string;
+};
+
 const emptyForm = {
   name: "", type: "ONU", model: "", serial_number: "", mac_address: "",
   ip_address: "", status: "offline", firmware: "", location: "", client_name: "", notes: "",
@@ -36,6 +46,7 @@ const emptyForm = {
 export default function Provisioning() {
   const { toast } = useToast();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [unprovisionedClients, setUnprovisionedClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -45,14 +56,28 @@ export default function Provisioning() {
   const [selectedEquip, setSelectedEquip] = useState<Equipment | null>(null);
   const [form, setForm] = useState(emptyForm);
 
-  const fetchEquipment = async () => {
+  const fetchData = async () => {
     setLoading(true);
-    const { data } = await supabase.from("equipment").select("*").order("created_at", { ascending: false });
-    setEquipment((data as Equipment[]) || []);
+    const [{ data: equipData }, { data: clientsData }] = await Promise.all([
+      supabase.from("equipment").select("*").order("created_at", { ascending: false }),
+      supabase.from("clients").select("id, full_name, nickname, phone, city, address").order("full_name"),
+    ]);
+
+    const equip = (equipData as Equipment[]) || [];
+    setEquipment(equip);
+
+    // Clientes cujo nome não aparece em nenhum equipamento
+    const provisionedNames = new Set(
+      equip.map((e) => e.client_name?.toLowerCase().trim()).filter(Boolean)
+    );
+    const unprovisioned = (clientsData as Client[] || []).filter(
+      (c) => !provisionedNames.has(c.full_name.toLowerCase().trim())
+    );
+    setUnprovisionedClients(unprovisioned);
     setLoading(false);
   };
 
-  useEffect(() => { fetchEquipment(); }, []);
+  useEffect(() => { fetchData(); }, []);
 
   const filtered = equipment.filter((e) => {
     const matchSearch = [e.name, e.serial_number, e.mac_address, e.client_name, e.model]
@@ -61,7 +86,11 @@ export default function Provisioning() {
     return matchSearch && matchStatus;
   });
 
-  const openAdd = () => { setEditingId(null); setForm(emptyForm); setDialogOpen(true); };
+  const openAdd = (clientName?: string) => {
+    setEditingId(null);
+    setForm({ ...emptyForm, client_name: clientName || "" });
+    setDialogOpen(true);
+  };
   const openEdit = (e: Equipment) => {
     setEditingId(e.id);
     setForm({
@@ -86,13 +115,13 @@ export default function Provisioning() {
       toast({ title: "Equipamento cadastrado" });
     }
     setDialogOpen(false);
-    fetchEquipment();
+    fetchData();
   };
 
   const handleDelete = async (id: string) => {
     await supabase.from("equipment").delete().eq("id", id);
     toast({ title: "Equipamento removido" });
-    fetchEquipment();
+    fetchData();
   };
 
   const handleReboot = async (e: Equipment) => {
@@ -128,6 +157,40 @@ export default function Provisioning() {
         </div>
       </div>
 
+      {/* Clientes não provisionados */}
+      {!loading && unprovisionedClients.length > 0 && (
+        <div className="rounded-xl border bg-card overflow-hidden">
+          <div className="flex items-center gap-3 px-5 py-4 border-b bg-warning/5">
+            <UserX className="h-5 w-5 text-warning" />
+            <div>
+              <p className="font-semibold text-foreground">Clientes sem provisionamento</p>
+              <p className="text-xs text-muted-foreground">{unprovisionedClients.length} cliente(s) aguardando instalação de equipamento</p>
+            </div>
+          </div>
+          <div className="divide-y">
+            {unprovisionedClients.map((c) => (
+              <div key={c.id} className="flex flex-col md:flex-row md:items-center justify-between px-5 py-3 gap-2 hover:bg-muted/30 transition-colors">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/10">
+                    <UserX className="h-4 w-4 text-warning" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-foreground truncate">{c.full_name}</p>
+                    <p className="text-xs text-muted-foreground">{formatPhone(c.phone)} • {c.city}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => openAdd(c.full_name)}
+                  className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5 text-sm text-primary font-medium hover:bg-primary/20 transition-colors shrink-0"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Provisionar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
         <div className="relative flex-1 w-full">
@@ -143,7 +206,7 @@ export default function Provisioning() {
             <SelectItem value="provisioning">Provisionando</SelectItem>
           </SelectContent>
         </Select>
-        <button onClick={openAdd} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
+        <button onClick={() => openAdd()} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-primary-foreground font-medium hover:bg-primary/90 transition-colors">
           <Plus className="h-4 w-4" /> Novo Equipamento
         </button>
       </div>
