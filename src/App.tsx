@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
 import DeviceDetail from "./pages/DeviceDetail";
 import WhatsApp from "./pages/WhatsApp";
+import Recharge from "./pages/Recharge";
 
 import Provisioning from "./pages/Provisioning";
 import Clients from "./pages/Clients";
@@ -66,6 +67,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><WhatsApp /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recharge"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><Recharge /></AppLayout>
                 </ProtectedRoute>
               }
             />
