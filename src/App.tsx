@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
 import WhatsApp from "./pages/WhatsApp";
 import SettingsPage from "./pages/SettingsPage";
+import Provisioning from "./pages/Provisioning";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><Dashboard /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/provisioning"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><Provisioning /></AppLayout>
                 </ProtectedRoute>
               }
             />
