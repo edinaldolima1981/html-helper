@@ -49,6 +49,57 @@ export type Database = {
           },
         ]
       }
+      clients: {
+        Row: {
+          address: string
+          cep: string | null
+          city: string
+          cpf: string
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          neighborhood: string | null
+          notes: string | null
+          phone: string
+          plan: string | null
+          state: string
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          cep?: string | null
+          city: string
+          cpf: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          neighborhood?: string | null
+          notes?: string | null
+          phone: string
+          plan?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          cep?: string | null
+          city?: string
+          cpf?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          neighborhood?: string | null
+          notes?: string | null
+          phone?: string
+          plan?: string | null
+          state?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       devices: {
         Row: {
           created_at: string
@@ -159,6 +210,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      service_orders: {
+        Row: {
+          assigned_to: string | null
+          client_id: string
+          completed_at: string | null
+          created_at: string
+          description: string
+          id: string
+          notes: string | null
+          scheduled_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          client_id: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          client_id?: string
+          completed_at?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          notes?: string | null
+          scheduled_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_orders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       system_settings: {
         Row: {

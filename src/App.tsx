@@ -12,6 +12,9 @@ import Devices from "./pages/Devices";
 import WhatsApp from "./pages/WhatsApp";
 import SettingsPage from "./pages/SettingsPage";
 import Provisioning from "./pages/Provisioning";
+import Clients from "./pages/Clients";
+import Interested from "./pages/Interested";
+import ServiceOrderStatus from "./pages/ServiceOrderStatus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -62,6 +65,30 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><SettingsPage /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><Clients /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/interested"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><Interested /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/service-orders"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><ServiceOrderStatus /></AppLayout>
                 </ProtectedRoute>
               }
             />
