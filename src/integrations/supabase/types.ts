@@ -79,6 +79,63 @@ export type Database = {
         }
         Relationships: []
       }
+      equipment: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          firmware: string | null
+          id: string
+          ip_address: string | null
+          location: string | null
+          mac_address: string
+          model: string
+          name: string
+          notes: string | null
+          serial_number: string
+          signal_level: number | null
+          status: string
+          type: string
+          updated_at: string
+          uptime: string | null
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          firmware?: string | null
+          id?: string
+          ip_address?: string | null
+          location?: string | null
+          mac_address?: string
+          model?: string
+          name?: string
+          notes?: string | null
+          serial_number?: string
+          signal_level?: number | null
+          status?: string
+          type?: string
+          updated_at?: string
+          uptime?: string | null
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          firmware?: string | null
+          id?: string
+          ip_address?: string | null
+          location?: string | null
+          mac_address?: string
+          model?: string
+          name?: string
+          notes?: string | null
+          serial_number?: string
+          signal_level?: number | null
+          status?: string
+          type?: string
+          updated_at?: string
+          uptime?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
