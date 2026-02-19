@@ -62,21 +62,44 @@ export default function WhatsApp() {
   const [loading, setLoading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // Buscar clientes cadastrados
+  // Buscar apenas clientes que já trocaram mensagens com a IA
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase.from("clients").select("id, full_name, phone, nickname, credits").order("full_name");
+      const { data: msgData } = await supabase
+        .from("whatsapp_messages")
+        .select("client_id")
+        .not("client_id", "is", null);
+
+      const clientIds = [...new Set((msgData || []).map((m: any) => m.client_id).filter(Boolean))];
+
+      if (clientIds.length === 0) {
+        setClients([]);
+        return;
+      }
+
+      const { data } = await supabase
+        .from("clients")
+        .select("id, full_name, phone, nickname, credits")
+        .in("id", clientIds)
+        .order("full_name");
+
       setClients((data || []).map(c => ({ ...c, credits: (c.credits as number) || 0 })));
     };
     fetchClients();
   }, []);
 
-  const fetchMessages = async () => {
-    const { data } = await supabase.from("whatsapp_messages").select("*").order("created_at", { ascending: true });
+  const fetchMessages = async (clientId?: string) => {
+    const id = clientId || selectedClient?.id;
+    if (!id) { setMessages([]); return; }
+    const { data } = await supabase
+      .from("whatsapp_messages")
+      .select("*")
+      .eq("client_id", id)
+      .order("created_at", { ascending: true });
     setMessages((data || []).map((m: any) => ({ ...m, suggestions: undefined, intent: undefined })));
   };
 
-  useEffect(() => { fetchMessages(); }, []);
+  useEffect(() => { if (selectedClient) fetchMessages(selectedClient.id); }, [selectedClient?.id]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const processWithAI = async (content: string): Promise<AiResponse | null> => {
@@ -107,7 +130,7 @@ export default function WhatsApp() {
     setMessages((prev) => [...prev, tempUserMsg]);
 
     // Save user message to DB
-    await supabase.from("whatsapp_messages").insert({ sender: "user", content, is_command: true });
+    await supabase.from("whatsapp_messages").insert({ sender: "user", content, is_command: true, client_id: selectedClient.id });
 
     // Process with AI
     const aiResult = await processWithAI(content);
@@ -125,7 +148,7 @@ export default function WhatsApp() {
     }
 
     // Save system response to DB
-    await supabase.from("whatsapp_messages").insert({ sender: "system", content: responseText });
+    await supabase.from("whatsapp_messages").insert({ sender: "system", content: responseText, client_id: selectedClient.id });
 
     // Add system message with suggestions
     const systemMsg: ChatMessage = {
@@ -167,7 +190,7 @@ export default function WhatsApp() {
     };
     setMessages((prev) => [...prev, tempUserMsg]);
 
-    await supabase.from("whatsapp_messages").insert({ sender: "user", content: confirmMsg, is_command: true });
+    await supabase.from("whatsapp_messages").insert({ sender: "user", content: confirmMsg, is_command: true, client_id: selectedClient.id });
 
     // Fetch current wifi settings for QR code generation
     const { data: wifiData } = await supabase.from("wifi_settings").select("ssid, password").limit(1).single();
@@ -189,7 +212,7 @@ export default function WhatsApp() {
       successText = `✅ Ação confirmada: ${suggestion}`;
     }
 
-    await supabase.from("whatsapp_messages").insert({ sender: "system", content: successText });
+    await supabase.from("whatsapp_messages").insert({ sender: "system", content: successText, client_id: selectedClient.id });
 
     const sysMsg: ChatMessage = {
       id: crypto.randomUUID(),
@@ -257,7 +280,7 @@ export default function WhatsApp() {
             {filteredClients.map((client) => (
               <button
                 key={client.id}
-                onClick={() => { setSelectedClient(client); setClientCredits(client.credits); setMessages([]); }}
+                onClick={() => { setSelectedClient(client); setClientCredits(client.credits); }}
                 className={`flex w-full items-center gap-3 border-b px-4 py-3 transition-colors hover:bg-accent ${
                   selectedClient?.id === client.id ? "border-l-4 border-l-primary bg-accent" : ""
                 }`}

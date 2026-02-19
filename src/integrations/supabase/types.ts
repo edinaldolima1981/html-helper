@@ -349,6 +349,7 @@ export type Database = {
       }
       whatsapp_messages: {
         Row: {
+          client_id: string | null
           command_type: string | null
           content: string
           created_at: string
@@ -357,6 +358,7 @@ export type Database = {
           sender: string
         }
         Insert: {
+          client_id?: string | null
           command_type?: string | null
           content: string
           created_at?: string
@@ -365,6 +367,7 @@ export type Database = {
           sender?: string
         }
         Update: {
+          client_id?: string | null
           command_type?: string | null
           content?: string
           created_at?: string
@@ -372,7 +375,15 @@ export type Database = {
           is_command?: boolean
           sender?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       wifi_settings: {
         Row: {
