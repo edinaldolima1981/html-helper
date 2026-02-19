@@ -59,10 +59,12 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          latitude: number | null
+          longitude: number | null
           neighborhood: string | null
+          nickname: string | null
           notes: string | null
           phone: string
-          plan: string | null
           state: string
           updated_at: string
         }
@@ -75,10 +77,12 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           neighborhood?: string | null
+          nickname?: string | null
           notes?: string | null
           phone: string
-          plan?: string | null
           state?: string
           updated_at?: string
         }
@@ -91,10 +95,12 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           neighborhood?: string | null
+          nickname?: string | null
           notes?: string | null
           phone?: string
-          plan?: string | null
           state?: string
           updated_at?: string
         }

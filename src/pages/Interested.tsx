@@ -101,7 +101,7 @@ export default function Interested() {
                       <span>{client.cpf}</span>
                       <span>•</span>
                       <span>{client.phone}</span>
-                      {client.plan && <Badge variant="secondary">{client.plan}</Badge>}
+                      {client.nickname && <Badge variant="secondary">{client.nickname}</Badge>}
                     </div>
                     <p className="text-xs text-muted-foreground">{client.address}, {client.city}/{client.state}</p>
                   </div>

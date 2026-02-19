@@ -19,7 +19,7 @@ interface Client {
   id: string;
   full_name: string;
   phone: string;
-  plan: string | null;
+  nickname: string | null;
 }
 
 interface AiResponse {
@@ -55,7 +55,7 @@ export default function WhatsApp() {
   // Buscar clientes cadastrados
   useEffect(() => {
     const fetchClients = async () => {
-      const { data } = await supabase.from("clients").select("id, full_name, phone, plan").order("full_name");
+      const { data } = await supabase.from("clients").select("id, full_name, phone, nickname").order("full_name");
       setClients(data || []);
     };
     fetchClients();
@@ -277,8 +277,8 @@ export default function WhatsApp() {
                   <p className="font-medium text-foreground">{selectedClient.full_name}</p>
                   <p className="flex items-center gap-1 text-sm text-muted-foreground">
                     {formatPhone(selectedClient.phone)}
-                    {selectedClient.plan && (
-                      <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">{selectedClient.plan}</span>
+                    {selectedClient.nickname && (
+                      <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary">{selectedClient.nickname}</span>
                     )}
                   </p>
                 </>

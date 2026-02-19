@@ -12,6 +12,7 @@ import { formatPhone, normalizePhone } from "@/lib/phone";
 
 interface ClientForm {
   full_name: string;
+  nickname: string;
   cpf: string;
   phone: string;
   email: string;
@@ -20,13 +21,14 @@ interface ClientForm {
   city: string;
   state: string;
   cep: string;
-  plan: string;
+  latitude: string;
+  longitude: string;
   notes: string;
 }
 
 const emptyForm: ClientForm = {
-  full_name: "", cpf: "", phone: "", email: "", address: "",
-  neighborhood: "", city: "", state: "SP", cep: "", plan: "", notes: "",
+  full_name: "", nickname: "", cpf: "", phone: "", email: "", address: "",
+  neighborhood: "", city: "", state: "SP", cep: "", latitude: "", longitude: "", notes: "",
 };
 
 export default function Clients() {
@@ -45,7 +47,12 @@ export default function Clients() {
 
   const createClient = useMutation({
     mutationFn: async (data: ClientForm) => {
-      const { error } = await supabase.from("clients").insert(data);
+      const payload = {
+        ...data,
+        latitude: data.latitude ? parseFloat(data.latitude) : null,
+        longitude: data.longitude ? parseFloat(data.longitude) : null,
+      };
+      const { error } = await supabase.from("clients").insert(payload);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -93,6 +100,10 @@ export default function Clients() {
                   <Input value={form.full_name} onChange={e => update("full_name", e.target.value)} placeholder="Nome do cliente" />
                 </div>
                 <div className="space-y-2">
+                  <Label>Apelido</Label>
+                  <Input value={form.nickname} onChange={e => update("nickname", e.target.value)} placeholder="Apelido" />
+                </div>
+                <div className="space-y-2">
                   <Label>CPF/CNPJ *</Label>
                   <Input value={form.cpf} onChange={e => update("cpf", e.target.value)} placeholder="000.000.000-00" />
                 </div>
@@ -125,8 +136,12 @@ export default function Clients() {
                   <Input value={form.state} onChange={e => update("state", e.target.value)} placeholder="UF" maxLength={2} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Plano</Label>
-                  <Input value={form.plan} onChange={e => update("plan", e.target.value)} placeholder="Ex: 100MB, 200MB" />
+                  <Label>Latitude</Label>
+                  <Input value={form.latitude} onChange={e => update("latitude", e.target.value)} placeholder="-23.5505" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Longitude</Label>
+                  <Input value={form.longitude} onChange={e => update("longitude", e.target.value)} placeholder="-46.6333" />
                 </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label>Observações</Label>
