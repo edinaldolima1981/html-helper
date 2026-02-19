@@ -26,13 +26,13 @@ interface ClientForm {
   notes: string;
 }
 
-const emptyForm: ClientForm = {
+const emptyForm = (): ClientForm => ({
   full_name: "", nickname: "", cpf: "", phone: "", email: "", address: "",
   neighborhood: "", city: "", state: "SP", cep: "", latitude: "", longitude: "", notes: "",
-};
+});
 
 export default function Clients() {
-  const [form, setForm] = useState<ClientForm>(emptyForm);
+  const [form, setForm] = useState<ClientForm>(emptyForm());
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -57,7 +57,7 @@ export default function Clients() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-      setForm(emptyForm);
+      setForm(emptyForm());
       toast({ title: "Cliente cadastrado com sucesso!" });
     },
     onError: (err: Error) => {
