@@ -1,4 +1,4 @@
-import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact, TrendingUp, UsersRound, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -13,20 +13,28 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 
-const navItems = [
+// Itens visíveis para todos os membros autenticados
+const commonItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Provisionamento", url: "/provisioning", icon: Server },
   { title: "Cadastro de Clientes", url: "/clients", icon: UserPlus },
   { title: "Interessados", url: "/interested", icon: Users },
   { title: "Clientes", url: "/clients-list", icon: Contact },
   { title: "Status da O.S.", url: "/service-orders", icon: ClipboardList },
-  { title: "Financeiro", url: "/financial", icon: TrendingUp },
   { title: "Dispositivos", url: "/devices", icon: Smartphone },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageSquare },
 ];
 
+// Itens exclusivos para administradores
+const adminItems = [
+  { title: "Financeiro", url: "/financial", icon: TrendingUp },
+  { title: "Equipe Técnica", url: "/team", icon: UsersRound },
+  { title: "Configurações", url: "/settings", icon: Settings },
+];
+
 export function AppSidebar() {
-  const { signOut } = useAuth();
+  const { signOut, isAdmin } = useAuth();
+  const navItems = isAdmin ? [...commonItems, ...adminItems] : commonItems;
 
   return (
     <Sidebar>
