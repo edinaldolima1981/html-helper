@@ -23,11 +23,19 @@ export default function Interested() {
   const queryClient = useQueryClient();
 
   const { data: clients, isLoading } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients-unprovisioned"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      const [{ data: clientsData, error }, { data: equipData }] = await Promise.all([
+        supabase.from("clients").select("*").order("created_at", { ascending: false }),
+        supabase.from("equipment").select("client_name"),
+      ]);
       if (error) throw error;
-      return data;
+      const provisionedNames = new Set(
+        (equipData || []).map((e: any) => e.client_name?.toLowerCase().trim()).filter(Boolean)
+      );
+      return (clientsData || []).filter(
+        (c: any) => !provisionedNames.has(c.full_name.toLowerCase().trim())
+      );
     },
   });
 
