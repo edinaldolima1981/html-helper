@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
 import WhatsApp from "./pages/WhatsApp";
-import SettingsPage from "./pages/SettingsPage";
+
 import Provisioning from "./pages/Provisioning";
 import Clients from "./pages/Clients";
 import Interested from "./pages/Interested";
@@ -57,14 +57,6 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><WhatsApp /></AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AppLayout><SettingsPage /></AppLayout>
                 </ProtectedRoute>
               }
             />
