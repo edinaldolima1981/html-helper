@@ -14,6 +14,7 @@ const quickCommands = [
   { label: "WiFi Visitante", command: "Criar wifi visitante por 24h" },
   { label: "Listar Dispositivos", command: "Quem está usando meu wifi?" },
   { label: "Bloquear Dispositivo", command: "Quero bloquear um dispositivo da minha rede" },
+  { label: "Desbloquear Dispositivo", command: "Quero desbloquear um dispositivo" },
   { label: "Ajuda", command: "Ajuda" },
 ];
 
@@ -148,11 +149,40 @@ export default function WhatsApp() {
       suggestions = aiResult.suggestions || [];
       intent = aiResult.intent;
 
-      // Handle block_device: append confirmation message
+      // Handle block_device: persist to DB and append confirmation
       if (intent === "block_device") {
         blockedDevice = aiResult.client_provided_value || "dispositivo";
-        const blockConfirm = `\n\n🚫 Dispositivo bloqueado: ${blockedDevice}\n✅ Acesso removido da rede com sucesso!`;
+        // Persist blocked device in the devices table
+        const macAddress = `BLOCKED-${Date.now()}`;
+        await supabase.from("devices").insert({
+          name: blockedDevice,
+          mac_address: macAddress,
+          status: "blocked",
+          ip_address: null,
+        });
+        const blockConfirm = `\n\n🚫 Dispositivo bloqueado: ${blockedDevice}\n✅ Acesso removido da rede com sucesso!\n🔒 Registrado no sistema — só será liberado com comando de desbloqueio.`;
         responseText = aiResult.response + blockConfirm;
+      }
+
+      // Handle unblock_device: update device status back to connected
+      if (intent === "unblock_device") {
+        const deviceName = aiResult.client_provided_value || "dispositivo";
+        // Find and unblock by name (case-insensitive partial match)
+        const { data: blockedDevices } = await supabase
+          .from("devices")
+          .select("id, name")
+          .eq("status", "blocked")
+          .ilike("name", `%${deviceName}%`);
+
+        if (blockedDevices && blockedDevices.length > 0) {
+          await supabase
+            .from("devices")
+            .update({ status: "connected" })
+            .eq("id", blockedDevices[0].id);
+          responseText = aiResult.response + `\n\n✅ Dispositivo ${blockedDevices[0].name} desbloqueado com sucesso! Ele pode voltar a acessar a rede.`;
+        } else {
+          responseText = aiResult.response + `\n\n⚠️ Não encontrei nenhum dispositivo bloqueado com esse nome.`;
+        }
       }
     } else {
       responseText = "Desculpe, não consegui processar seu comando. Tente novamente.";
@@ -175,6 +205,8 @@ export default function WhatsApp() {
     // Log activity
     const actionLabel = intent === "block_device"
       ? `Dispositivo bloqueado (IA): ${blockedDevice}`
+      : intent === "unblock_device"
+      ? `Dispositivo desbloqueado (IA): ${aiResult?.client_provided_value || "dispositivo"}`
       : `Comando WhatsApp (IA): ${content}`;
     await supabase.from("activity_log").insert({
       user_id: user?.id,
