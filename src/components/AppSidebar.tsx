@@ -60,8 +60,8 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-muted-foreground transition-all hover:bg-muted"
-                      activeClassName="bg-accent text-accent-foreground border-l-4 border-l-primary font-medium"
+                      className="flex items-center gap-3 rounded-lg px-4 py-3 text-sidebar-foreground/70 transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground border-l-4 border-l-sidebar-primary font-semibold"
                     >
                       <item.icon className="h-5 w-5" />
                       <span>{item.title}</span>
@@ -77,7 +77,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <button
           onClick={signOut}
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sidebar-foreground/60 transition-all hover:bg-destructive/20 hover:text-destructive-foreground"
         >
           <LogOut className="h-5 w-5" />
           <span>Sair</span>
