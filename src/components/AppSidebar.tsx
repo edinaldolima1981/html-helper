@@ -40,12 +40,12 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-bg">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-bg shadow-lg">
             <Wifi className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-foreground">WIFIControl</h1>
-            <p className="text-xs text-muted-foreground">Pro</p>
+            <h1 className="font-bold text-white text-lg tracking-wide">WIFIControl</h1>
+            <p className="text-xs text-sidebar-foreground font-medium">Pro</p>
           </div>
         </div>
       </SidebarHeader>
