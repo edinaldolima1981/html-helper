@@ -1,22 +1,6 @@
-# Dependências (serão instaladas no build)
 node_modules
-
-# Build local
 dist
-
-# Git
 .git
-.gitignore
-
-# Supabase local (só edge functions ficam no Lovable Cloud)
-supabase/.temp
-supabase/migrations
-
-# Arquivos de desenvolvimento
-*.log
-.DS_Store
-Thumbs.db
-
-# Variáveis de ambiente locais (não deve entrar na imagem)
-.env.local
-.env.development
+.env
+Dockerfile
+docker-compose.yml
