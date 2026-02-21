@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
+        VITE_SUPABASE_PROJECT_ID: ${VITE_SUPABASE_PROJECT_ID}
+    container_name: wificontrol-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    # Se usar SSL com reverse proxy (Nginx Proxy Manager / Caddy), troque para:
+    # ports:
+    #   - "127.0.0.1:3000:80"
