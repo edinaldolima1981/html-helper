@@ -31,7 +31,6 @@ Deno.serve(async (req) => {
     const isInitialSetup = (count === 0);
 
     if (!isInitialSetup) {
-      // Verify caller is admin
       if (!authHeader) {
         return new Response(JSON.stringify({ error: "Não autorizado" }), {
           status: 401,
@@ -40,27 +39,33 @@ Deno.serve(async (req) => {
       }
 
       const token = authHeader.replace("Bearer ", "");
-      const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
       
-      if (!caller) {
-        return new Response(JSON.stringify({ error: "Token inválido" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      // Allow service role key
+      const isServiceRole = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      
+      if (!isServiceRole) {
+        const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
+        
+        if (!caller) {
+          return new Response(JSON.stringify({ error: "Token inválido" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
 
-      const { data: callerRole } = await supabaseAdmin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", caller.id)
-        .eq("role", "admin")
-        .maybeSingle();
+        const { data: callerRole } = await supabaseAdmin
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", caller.id)
+          .eq("role", "admin")
+          .maybeSingle();
 
-      if (!callerRole) {
-        return new Response(JSON.stringify({ error: "Apenas administradores podem criar usuários" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        if (!callerRole) {
+          return new Response(JSON.stringify({ error: "Apenas administradores podem criar usuários" }), {
+            status: 403,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
       }
     }
 
