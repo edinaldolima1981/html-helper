@@ -75,6 +75,32 @@ export default function Interested() {
     },
   });
 
+  const addInterested = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("clients").insert({
+        full_name: newName.trim(),
+        phone: normalizePhone(newPhone),
+        address: newAddress.trim(),
+        cpf: "000.000.000-00",
+        city: "A definir",
+        state: "SP",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-unprovisioned"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      setAddDialog(false);
+      setNewName("");
+      setNewPhone("");
+      setNewAddress("");
+      toast({ title: "Interessado cadastrado com sucesso!" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro ao cadastrar", description: err.message, variant: "destructive" });
+    },
+  });
+
   const filtered = clients?.filter(c =>
     c.full_name.toLowerCase().includes(search.toLowerCase()) ||
     c.cpf.includes(search)
@@ -87,12 +113,18 @@ export default function Interested() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Users className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Interessados</h1>
-          <p className="text-muted-foreground">Clientes cadastrados — gere ordens de serviço</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Users className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Interessados</h1>
+            <p className="text-muted-foreground">Clientes interessados — cadastre leads e gere O.S.</p>
+          </div>
         </div>
+        <Button onClick={() => setAddDialog(true)} className="gap-2">
+          <UserPlus className="h-4 w-4" />
+          Cadastrar Interessado
+        </Button>
       </div>
 
       <div className="relative max-w-md">
