@@ -143,11 +143,29 @@ export default function WhatsApp() {
     let suggestions: string[] = [];
     let intent: string = "unknown";
     let blockedDevice: string | null = null;
+    let qrData: string | undefined;
 
     if (aiResult) {
       responseText = aiResult.response;
       suggestions = aiResult.suggestions || [];
       intent = aiResult.intent;
+
+      // Handle direct change_password or change_ssid with client_provided_value
+      if ((intent === "change_password" || intent === "change_ssid") && aiResult.client_provided_value) {
+        const { data: wifiData } = await supabase.from("wifi_settings").select("ssid, password").limit(1).single();
+        const currentSsid = wifiData?.ssid || "MinhaRede";
+        const currentPassword = wifiData?.password || "12345678";
+        const value = aiResult.client_provided_value;
+
+        if (intent === "change_password") {
+          qrData = `WIFI:T:WPA;S:${currentSsid};P:${value};;`;
+          responseText += `\n\n📶 Rede: ${currentSsid}\n🔑 Nova senha: ${value}\n\nTodos os dispositivos precisarão reconectar.\nEscaneie o QR Code abaixo para conectar:`;
+        } else {
+          qrData = `WIFI:T:WPA;S:${value};P:${currentPassword};;`;
+          responseText += `\n\n📶 Nova rede: ${value}\n🔑 Senha: ${currentPassword}\n\nTodos os dispositivos precisarão reconectar.\nEscaneie o QR Code abaixo para conectar:`;
+        }
+        suggestions = []; // No need for suggestions since value was provided
+      }
 
       // Handle block_device: persist to DB and append confirmation
       if (intent === "block_device") {
@@ -199,6 +217,7 @@ export default function WhatsApp() {
       created_at: new Date().toISOString(),
       suggestions,
       intent,
+      qrData,
     };
     setMessages((prev) => [...prev, systemMsg]);
 
