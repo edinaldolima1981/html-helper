@@ -127,6 +127,21 @@ export default function Clients() {
                   <Label>E-mail</Label>
                   <Input type="email" value={form.email} onChange={e => update("email", e.target.value)} placeholder="email@exemplo.com" />
                 </div>
+                <div className="space-y-2">
+                  <Label>Plano</Label>
+                  <Select value={form.plan_id} onValueChange={(v) => update("plan_id", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.name} - R$ {Number(plan.price).toFixed(2).replace(".", ",")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label>Endereço *</Label>
                   <Input value={form.address} onChange={e => update("address", e.target.value)} placeholder="Rua, número" />
