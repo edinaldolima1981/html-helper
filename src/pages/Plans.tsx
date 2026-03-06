@@ -199,9 +199,17 @@ export default function Plans() {
               <Label>Funcionalidades</Label>
               <ul className="space-y-1.5 max-h-40 overflow-y-auto">
                 {formFeatures.map((f, i) => (
-                  <li key={i} className="flex items-center justify-between rounded-md bg-muted px-3 py-1.5 text-sm">
-                    <span>{f}</span>
-                    <button onClick={() => removeFeature(i)} className="text-destructive hover:text-destructive/80">
+                  <li key={i} className="flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-sm">
+                    <Input
+                      value={f}
+                      onChange={(e) => {
+                        const updated = [...formFeatures];
+                        updated[i] = e.target.value;
+                        setFormFeatures(updated);
+                      }}
+                      className="h-7 border-none bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+                    />
+                    <button onClick={() => removeFeature(i)} className="shrink-0 text-destructive hover:text-destructive/80">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </li>
