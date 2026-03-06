@@ -31,5 +31,15 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     return <Navigate to="/whatsapp" replace />;
   }
 
+  // Investor role can only access /investor/* routes
+  if (role === "investor" && !location.pathname.startsWith("/investor")) {
+    return <Navigate to="/investor" replace />;
+  }
+
+  // Admin/technician should not access /investor/* routes
+  if (role !== "investor" && location.pathname.startsWith("/investor")) {
+    return <Navigate to="/" replace />;
+  }
+
   return <>{children}</>;
 }
