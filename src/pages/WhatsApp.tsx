@@ -217,6 +217,7 @@ export default function WhatsApp() {
       created_at: new Date().toISOString(),
       suggestions,
       intent,
+      qrData,
     };
     setMessages((prev) => [...prev, systemMsg]);
 
