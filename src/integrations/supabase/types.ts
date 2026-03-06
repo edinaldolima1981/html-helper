@@ -234,6 +234,45 @@ export type Database = {
         }
         Relationships: []
       }
+      plans: {
+        Row: {
+          created_at: string
+          features: string[]
+          id: string
+          name: string
+          popular: boolean
+          price: number
+          sort_order: number
+          subscribers: number
+          subtitle: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          features?: string[]
+          id?: string
+          name: string
+          popular?: boolean
+          price?: number
+          sort_order?: number
+          subscribers?: number
+          subtitle?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          features?: string[]
+          id?: string
+          name?: string
+          popular?: boolean
+          price?: number
+          sort_order?: number
+          subscribers?: number
+          subtitle?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
