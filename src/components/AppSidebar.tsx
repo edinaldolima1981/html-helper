@@ -23,6 +23,7 @@ const commonItems = [
   { title: "Status da O.S.", url: "/service-orders", icon: ClipboardList },
   { title: "Dispositivos", url: "/devices", icon: Smartphone },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageSquare },
+  { title: "Planos", url: "/plans", icon: CreditCard },
 ];
 
 // Itens exclusivos para administradores
