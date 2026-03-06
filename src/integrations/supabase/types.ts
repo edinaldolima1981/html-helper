@@ -49,6 +49,45 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          new_value: Json | null
+          old_value: Json | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          new_value?: Json | null
+          old_value?: Json | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address: string
@@ -242,6 +281,128 @@ export type Database = {
           type?: string
           updated_at?: string
           uptime?: string | null
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          category: string
+          created_at: string
+          date: string
+          document_url: string | null
+          id: string
+          notes: string | null
+          product: string
+          quantity: number
+          registered_by: string | null
+          supplier: string
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          date?: string
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          product: string
+          quantity?: number
+          registered_by?: string | null
+          supplier: string
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          date?: string
+          document_url?: string | null
+          id?: string
+          notes?: string | null
+          product?: string
+          quantity?: number
+          registered_by?: string | null
+          supplier?: string
+          total?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      investor_profits: {
+        Row: {
+          created_at: string
+          id: string
+          investor_id: string
+          investor_share: number
+          month: string
+          net_profit: number
+          paid: boolean
+          total_expenses: number
+          total_revenue: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          investor_id: string
+          investor_share?: number
+          month: string
+          net_profit?: number
+          paid?: boolean
+          total_expenses?: number
+          total_revenue?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          investor_id?: string
+          investor_share?: number
+          month?: string
+          net_profit?: number
+          paid?: boolean
+          total_expenses?: number
+          total_revenue?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investor_profits_investor_id_fkey"
+            columns: ["investor_id"]
+            isOneToOne: false
+            referencedRelation: "investors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      investors: {
+        Row: {
+          created_at: string
+          id: string
+          invested_amount: number
+          notes: string | null
+          participation_percentage: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invested_amount?: number
+          notes?: string | null
+          participation_percentage?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invested_amount?: number
+          notes?: string | null
+          participation_percentage?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -544,7 +705,7 @@ export type Database = {
       is_authenticated_member: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "technician" | "teste"
+      app_role: "admin" | "technician" | "teste" | "investor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -672,7 +833,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "technician", "teste"],
+      app_role: ["admin", "technician", "teste", "investor"],
     },
   },
 } as const
