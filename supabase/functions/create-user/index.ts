@@ -43,14 +43,24 @@ Deno.serve(async (req) => {
         }
 
         const token = authHeader.replace("Bearer ", "");
-        const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
         
-        if (!caller) {
+        // Create a client with the caller's token to verify identity
+        const supabaseCaller = createClient(
+          Deno.env.get("SUPABASE_URL")!,
+          Deno.env.get("SUPABASE_ANON_KEY")!,
+          { global: { headers: { Authorization: authHeader } } }
+        );
+        
+        const { data: claimsData, error: claimsError } = await supabaseCaller.auth.getClaims(token);
+        
+        if (claimsError || !claimsData?.claims) {
           return new Response(JSON.stringify({ error: "Token inválido" }), {
             status: 401,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
           });
         }
+        
+        const callerId = claimsData.claims.sub;
 
         const { data: callerRole } = await supabaseAdmin
           .from("user_roles")
