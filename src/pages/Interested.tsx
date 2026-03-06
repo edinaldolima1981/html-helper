@@ -200,6 +200,43 @@ export default function Interested() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={addDialog} onOpenChange={setAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cadastrar Interessado</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome Completo *</Label>
+              <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome do cliente" />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone *</Label>
+              <Input value={formatPhone(newPhone)} onChange={e => setNewPhone(e.target.value)} placeholder="(11) 99999-9999" maxLength={16} />
+            </div>
+            <div className="space-y-2">
+              <Label>Endereço *</Label>
+              <Input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="Rua, número, bairro" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialog(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (!newName.trim() || !newPhone.trim() || !newAddress.trim()) {
+                  toast({ title: "Preencha todos os campos", variant: "destructive" });
+                  return;
+                }
+                addInterested.mutate();
+              }}
+              disabled={addInterested.isPending}
+            >
+              {addInterested.isPending ? "Cadastrando..." : "Cadastrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
