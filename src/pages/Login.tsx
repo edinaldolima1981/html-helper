@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,7 +80,10 @@ export default function Login() {
               Entrar
             </Button>
           </form>
-          <p className="mt-4 text-center text-xs text-muted-foreground">
+          <Link to="/forgot-password" className="mt-4 block text-center text-sm text-primary hover:underline">
+            Esqueci minha senha
+          </Link>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
             Acesso restrito a administradores e equipe técnica
           </p>
         </CardContent>
