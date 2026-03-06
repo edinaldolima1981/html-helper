@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2 } from "lucide-react";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading, role } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -23,6 +24,11 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
+  }
+
+  // Teste role can only access /whatsapp
+  if (role === "teste" && location.pathname !== "/whatsapp") {
+    return <Navigate to="/whatsapp" replace />;
   }
 
   return <>{children}</>;
