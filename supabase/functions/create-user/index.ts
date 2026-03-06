@@ -31,19 +31,18 @@ Deno.serve(async (req) => {
     const isInitialSetup = (count === 0);
 
     if (!isInitialSetup) {
-      if (!authHeader) {
-        return new Response(JSON.stringify({ error: "Não autorizado" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
+      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+      const isSetupCall = setup_key === serviceRoleKey;
 
-      const token = authHeader.replace("Bearer ", "");
-      
-      // Allow service role key
-      const isServiceRole = token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-      
-      if (!isServiceRole) {
+      if (!isSetupCall) {
+        if (!authHeader) {
+          return new Response(JSON.stringify({ error: "Não autorizado" }), {
+            status: 401,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        const token = authHeader.replace("Bearer ", "");
         const { data: { user: caller } } = await supabaseAdmin.auth.getUser(token);
         
         if (!caller) {
