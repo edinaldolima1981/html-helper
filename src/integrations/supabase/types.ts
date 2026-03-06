@@ -290,6 +290,7 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          initial_password: string | null
           updated_at: string
         }
         Insert: {
@@ -297,6 +298,7 @@ export type Database = {
           email?: string
           full_name?: string
           id: string
+          initial_password?: string | null
           updated_at?: string
         }
         Update: {
@@ -304,6 +306,7 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          initial_password?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -541,7 +544,7 @@ export type Database = {
       is_authenticated_member: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "technician"
+      app_role: "admin" | "technician" | "teste"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -669,7 +672,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "technician"],
+      app_role: ["admin", "technician", "teste"],
     },
   },
 } as const
