@@ -6,19 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Users, FileText, Search } from "lucide-react";
+import { Users, FileText, Search, UserPlus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatPhone, normalizePhone } from "@/lib/phone";
 
 export default function Interested() {
   const [search, setSearch] = useState("");
   const [osDialog, setOsDialog] = useState(false);
+  const [addDialog, setAddDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [osDescription, setOsDescription] = useState("Instalação");
   const [osScheduledDate, setOsScheduledDate] = useState("");
   const [osAssignedTo, setOsAssignedTo] = useState("");
   const [osNotes, setOsNotes] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newAddress, setNewAddress] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
