@@ -6,19 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Users, FileText, Search } from "lucide-react";
+import { Users, FileText, Search, UserPlus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { formatPhone, normalizePhone } from "@/lib/phone";
 
 export default function Interested() {
   const [search, setSearch] = useState("");
   const [osDialog, setOsDialog] = useState(false);
+  const [addDialog, setAddDialog] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [osDescription, setOsDescription] = useState("Instalação");
   const [osScheduledDate, setOsScheduledDate] = useState("");
   const [osAssignedTo, setOsAssignedTo] = useState("");
   const [osNotes, setOsNotes] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newPhone, setNewPhone] = useState("");
+  const [newAddress, setNewAddress] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -70,6 +75,32 @@ export default function Interested() {
     },
   });
 
+  const addInterested = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("clients").insert({
+        full_name: newName.trim(),
+        phone: normalizePhone(newPhone),
+        address: newAddress.trim(),
+        cpf: "000.000.000-00",
+        city: "A definir",
+        state: "SP",
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients-unprovisioned"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      setAddDialog(false);
+      setNewName("");
+      setNewPhone("");
+      setNewAddress("");
+      toast({ title: "Interessado cadastrado com sucesso!" });
+    },
+    onError: (err: Error) => {
+      toast({ title: "Erro ao cadastrar", description: err.message, variant: "destructive" });
+    },
+  });
+
   const filtered = clients?.filter(c =>
     c.full_name.toLowerCase().includes(search.toLowerCase()) ||
     c.cpf.includes(search)
@@ -82,12 +113,18 @@ export default function Interested() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Users className="h-8 w-8 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Interessados</h1>
-          <p className="text-muted-foreground">Clientes cadastrados — gere ordens de serviço</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Users className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Interessados</h1>
+            <p className="text-muted-foreground">Clientes interessados — cadastre leads e gere O.S.</p>
+          </div>
         </div>
+        <Button onClick={() => setAddDialog(true)} className="gap-2">
+          <UserPlus className="h-4 w-4" />
+          Cadastrar Interessado
+        </Button>
       </div>
 
       <div className="relative max-w-md">
@@ -159,6 +196,43 @@ export default function Interested() {
             <Button variant="outline" onClick={() => setOsDialog(false)}>Cancelar</Button>
             <Button onClick={() => createOS.mutate()} disabled={createOS.isPending}>
               {createOS.isPending ? "Gerando..." : "Gerar O.S."}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={addDialog} onOpenChange={setAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cadastrar Interessado</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome Completo *</Label>
+              <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome do cliente" />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone *</Label>
+              <Input value={formatPhone(newPhone)} onChange={e => setNewPhone(e.target.value)} placeholder="(11) 99999-9999" maxLength={16} />
+            </div>
+            <div className="space-y-2">
+              <Label>Endereço *</Label>
+              <Input value={newAddress} onChange={e => setNewAddress(e.target.value)} placeholder="Rua, número, bairro" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddDialog(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                if (!newName.trim() || !newPhone.trim() || !newAddress.trim()) {
+                  toast({ title: "Preencha todos os campos", variant: "destructive" });
+                  return;
+                }
+                addInterested.mutate();
+              }}
+              disabled={addInterested.isPending}
+            >
+              {addInterested.isPending ? "Cadastrando..." : "Cadastrar"}
             </Button>
           </DialogFooter>
         </DialogContent>
