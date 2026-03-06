@@ -66,6 +66,7 @@ export type Database = {
           nickname: string | null
           notes: string | null
           phone: string
+          plan_id: string | null
           state: string
           updated_at: string
         }
@@ -85,6 +86,7 @@ export type Database = {
           nickname?: string | null
           notes?: string | null
           phone: string
+          plan_id?: string | null
           state?: string
           updated_at?: string
         }
@@ -104,10 +106,19 @@ export type Database = {
           nickname?: string | null
           notes?: string | null
           phone?: string
+          plan_id?: string | null
           state?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "clients_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       credit_transactions: {
         Row: {

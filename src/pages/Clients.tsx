@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { UserPlus, Users } from "lucide-react";
 import { formatPhone, normalizePhone } from "@/lib/phone";
@@ -24,11 +25,12 @@ interface ClientForm {
   latitude: string;
   longitude: string;
   notes: string;
+  plan_id: string;
 }
 
 const emptyForm = (): ClientForm => ({
   full_name: "", nickname: "", cpf: "", phone: "", email: "", address: "",
-  neighborhood: "", city: "", state: "SP", cep: "", latitude: "", longitude: "", notes: "",
+  neighborhood: "", city: "", state: "SP", cep: "", latitude: "", longitude: "", notes: "", plan_id: "",
 });
 
 export default function Clients() {
@@ -45,12 +47,22 @@ export default function Clients() {
     },
   });
 
+  const { data: plans = [] } = useQuery({
+    queryKey: ["plans"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("plans").select("*").order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const createClient = useMutation({
     mutationFn: async (data: ClientForm) => {
       const payload = {
         ...data,
         latitude: data.latitude ? parseFloat(data.latitude) : null,
         longitude: data.longitude ? parseFloat(data.longitude) : null,
+        plan_id: data.plan_id || null,
       };
       const { error } = await supabase.from("clients").insert(payload);
       if (error) throw error;
@@ -114,6 +126,21 @@ export default function Clients() {
                 <div className="space-y-2">
                   <Label>E-mail</Label>
                   <Input type="email" value={form.email} onChange={e => update("email", e.target.value)} placeholder="email@exemplo.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Plano</Label>
+                  <Select value={form.plan_id} onValueChange={(v) => update("plan_id", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o plano" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {plans.map((plan) => (
+                        <SelectItem key={plan.id} value={plan.id}>
+                          {plan.name} - R$ {Number(plan.price).toFixed(2).replace(".", ",")}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="sm:col-span-2 space-y-2">
                   <Label>Endereço *</Label>

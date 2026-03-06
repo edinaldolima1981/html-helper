@@ -1,0 +1,1 @@
+ALTER TABLE public.clients ADD COLUMN plan_id uuid REFERENCES public.plans(id) ON DELETE SET NULL DEFAULT NULL;
