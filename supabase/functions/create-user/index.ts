@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
         const { data: callerRole } = await supabaseAdmin
           .from("user_roles")
           .select("role")
-          .eq("user_id", caller.id)
+          .eq("user_id", callerId)
           .eq("role", "admin")
           .maybeSingle();
 
