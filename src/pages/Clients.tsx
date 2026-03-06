@@ -47,6 +47,15 @@ export default function Clients() {
     },
   });
 
+  const { data: plans = [] } = useQuery({
+    queryKey: ["plans"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("plans").select("*").order("sort_order");
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const createClient = useMutation({
     mutationFn: async (data: ClientForm) => {
       const payload = {
