@@ -12,6 +12,7 @@ interface TeamMember {
   role: string;
   email: string;
   full_name: string;
+  initial_password: string | null;
 }
 
 export default function TeamPage() {
@@ -29,7 +30,7 @@ export default function TeamPage() {
     setLoading(true);
     // Busca roles + profiles juntos
     const { data: roles } = await supabase.from("user_roles").select("id, user_id, role");
-    const { data: profiles } = await supabase.from("profiles").select("id, email, full_name");
+    const { data: profiles } = await supabase.from("profiles").select("id, email, full_name, initial_password");
 
     if (roles && profiles) {
       const profileMap = Object.fromEntries(profiles.map((p) => [p.id, p]));
@@ -39,6 +40,7 @@ export default function TeamPage() {
         role: r.role,
         email: profileMap[r.user_id]?.email ?? "—",
         full_name: profileMap[r.user_id]?.full_name ?? "—",
+        initial_password: profileMap[r.user_id]?.initial_password ?? null,
       }));
       setMembers(list);
     }
@@ -215,6 +217,9 @@ export default function TeamPage() {
                   <div>
                     <p className="font-medium text-foreground">{member.full_name}</p>
                     <p className="text-sm text-muted-foreground">{member.email}</p>
+                    {member.initial_password && (
+                      <p className="text-xs text-muted-foreground/70">Senha: <span className="font-mono bg-muted px-1.5 py-0.5 rounded">{member.initial_password}</span></p>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4">

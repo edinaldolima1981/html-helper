@@ -34,8 +34,12 @@ const adminItems = [
 ];
 
 export function AppSidebar() {
-  const { signOut, isAdmin } = useAuth();
-  const navItems = isAdmin ? [...commonItems, ...adminItems] : commonItems;
+  const { signOut, isAdmin, role } = useAuth();
+  const isTeste = role === "teste";
+  const testeItems = [
+    { title: "WhatsApp", url: "/whatsapp", icon: MessageSquare },
+  ];
+  const navItems = isTeste ? testeItems : isAdmin ? [...commonItems, ...adminItems] : commonItems;
 
   return (
     <Sidebar>

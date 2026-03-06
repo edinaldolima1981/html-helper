@@ -86,6 +86,11 @@ Deno.serve(async (req) => {
       role: userRole,
     });
 
+    // Save initial password to profile for admin reference
+    await supabaseAdmin.from("profiles").update({
+      initial_password: password,
+    }).eq("id", newUser.user.id);
+
     return new Response(
       JSON.stringify({
         success: true,
