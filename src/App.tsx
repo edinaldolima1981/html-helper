@@ -23,6 +23,7 @@ import Clients from "./pages/Clients";
 import ClientsList from "./pages/ClientsList";
 import Interested from "./pages/Interested";
 import ServiceOrderStatus from "./pages/ServiceOrderStatus";
+import Plans from "./pages/Plans";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -139,6 +140,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <AppLayout><SettingsPage /></AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/plans"
+              element={
+                <ProtectedRoute>
+                  <AppLayout><Plans /></AppLayout>
                 </ProtectedRoute>
               }
             />
