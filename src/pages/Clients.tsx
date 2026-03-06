@@ -62,6 +62,7 @@ export default function Clients() {
         ...data,
         latitude: data.latitude ? parseFloat(data.latitude) : null,
         longitude: data.longitude ? parseFloat(data.longitude) : null,
+        plan_id: data.plan_id || null,
       };
       const { error } = await supabase.from("clients").insert(payload);
       if (error) throw error;
