@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Calculator, TrendingUp, DollarSign, Clock, Users } from "lucide-react";
+import { Calculator, TrendingUp, DollarSign, Clock, Users, BarChart3 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 export default function InvestorSimulator() {
   const [investedAmount, setInvestedAmount] = useState(5000);
@@ -10,16 +11,31 @@ export default function InvestorSimulator() {
   const [clientsPerRouter, setClientsPerRouter] = useState(5);
   const [monthlyFee, setMonthlyFee] = useState(21.99);
   const [participation, setParticipation] = useState(30);
+  const [expenseRate, setExpenseRate] = useState(25);
 
   const totalClients = routers * clientsPerRouter;
   const monthlyRevenue = totalClients * monthlyFee;
-  const estimatedExpenses = monthlyRevenue * 0.25; // 25% estimated expenses
+  const estimatedExpenses = monthlyRevenue * (expenseRate / 100);
   const netProfit = monthlyRevenue - estimatedExpenses;
   const investorMonthlyProfit = netProfit * (participation / 100);
   const investorAnnualProfit = investorMonthlyProfit * 12;
-  const paybackMonths = investedAmount > 0 && investorMonthlyProfit > 0 
-    ? Math.ceil(investedAmount / investorMonthlyProfit) 
-    : 0;
+  const paybackMonths = investedAmount > 0 && investorMonthlyProfit > 0
+    ? Math.ceil(investedAmount / investorMonthlyProfit) : 0;
+  const roi12months = investedAmount > 0 ? ((investorAnnualProfit / investedAmount) * 100) : 0;
+
+  // Projection chart data
+  const projectionData = [];
+  let accumulated = 0;
+  for (let m = 1; m <= 24; m++) {
+    accumulated += investorMonthlyProfit;
+    if (m % 3 === 0 || m === 1) {
+      projectionData.push({
+        month: `Mês ${m}`,
+        acumulado: Math.round(accumulated),
+        investido: investedAmount,
+      });
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -41,67 +57,41 @@ export default function InvestorSimulator() {
               <label className="text-sm font-medium text-foreground">
                 Valor Investido: <span className="text-primary">R$ {investedAmount.toLocaleString("pt-BR")}</span>
               </label>
-              <Slider
-                value={[investedAmount]}
-                onValueChange={([v]) => setInvestedAmount(v)}
-                min={1000}
-                max={100000}
-                step={500}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>R$ 1.000</span>
-                <span>R$ 100.000</span>
-              </div>
+              <Slider value={[investedAmount]} onValueChange={([v]) => setInvestedAmount(v)} min={1000} max={100000} step={500} />
+              <div className="flex justify-between text-xs text-muted-foreground"><span>R$ 1.000</span><span>R$ 100.000</span></div>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Roteadores: <span className="text-primary">{routers}</span>
               </label>
-              <Slider
-                value={[routers]}
-                onValueChange={([v]) => setRouters(v)}
-                min={1}
-                max={100}
-                step={1}
-              />
+              <Slider value={[routers]} onValueChange={([v]) => setRouters(v)} min={1} max={100} step={1} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Clientes por Roteador: <span className="text-primary">{clientsPerRouter}</span>
               </label>
-              <Slider
-                value={[clientsPerRouter]}
-                onValueChange={([v]) => setClientsPerRouter(v)}
-                min={1}
-                max={20}
-                step={1}
-              />
+              <Slider value={[clientsPerRouter]} onValueChange={([v]) => setClientsPerRouter(v)} min={1} max={20} step={1} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Valor da Mensalidade (R$)</label>
-              <Input
-                type="number"
-                value={monthlyFee}
-                onChange={(e) => setMonthlyFee(Number(e.target.value))}
-                min={0}
-                step={0.01}
-              />
+              <Input type="number" value={monthlyFee} onChange={(e) => setMonthlyFee(Number(e.target.value))} min={0} step={0.01} />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">
                 Participação: <span className="text-primary">{participation}%</span>
               </label>
-              <Slider
-                value={[participation]}
-                onValueChange={([v]) => setParticipation(v)}
-                min={1}
-                max={100}
-                step={1}
-              />
+              <Slider value={[participation]} onValueChange={([v]) => setParticipation(v)} min={1} max={100} step={1} />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">
+                Taxa de Despesas: <span className="text-destructive">{expenseRate}%</span>
+              </label>
+              <Slider value={[expenseRate]} onValueChange={([v]) => setExpenseRate(v)} min={5} max={60} step={1} />
             </div>
           </CardContent>
         </Card>
@@ -126,9 +116,7 @@ export default function InvestorSimulator() {
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Receita Mensal</p>
-                    <p className="text-xl font-bold text-success">
-                      R$ {monthlyRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                    </p>
+                    <p className="text-xl font-bold text-success">R$ {monthlyRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
                   </div>
                 </div>
               </div>
@@ -139,15 +127,17 @@ export default function InvestorSimulator() {
             <CardContent className="p-6 text-center space-y-4">
               <div>
                 <p className="text-sm text-muted-foreground">Seu Lucro Mensal</p>
-                <p className="text-3xl font-bold text-success">
-                  R$ {investorMonthlyProfit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </p>
+                <p className="text-3xl font-bold text-success">R$ {investorMonthlyProfit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
               </div>
-              <div className="border-t pt-4">
-                <p className="text-sm text-muted-foreground">Seu Lucro Anual</p>
-                <p className="text-2xl font-bold text-primary">
-                  R$ {investorAnnualProfit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                </p>
+              <div className="border-t pt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Lucro Anual</p>
+                  <p className="text-xl font-bold text-primary">R$ {investorAnnualProfit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">ROI Anual</p>
+                  <p className="text-xl font-bold text-warning">{roi12months.toFixed(1)}%</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -163,16 +153,35 @@ export default function InvestorSimulator() {
                   {paybackMonths > 0 ? `${paybackMonths} meses` : "—"}
                 </p>
                 {paybackMonths > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    ≈ {(paybackMonths / 12).toFixed(1)} anos
-                  </p>
+                  <p className="text-xs text-muted-foreground">≈ {(paybackMonths / 12).toFixed(1)} anos</p>
                 )}
               </div>
             </CardContent>
           </Card>
 
+          {/* Projection Chart */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-primary" /> Projeção 24 Meses
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={projectionData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                  <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip formatter={(v: number) => `R$ ${v.toLocaleString("pt-BR")}`} />
+                  <Bar dataKey="acumulado" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} name="Lucro Acumulado" />
+                  <Bar dataKey="investido" fill="hsl(var(--primary) / 0.3)" radius={[4, 4, 0, 0]} name="Investimento" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
           <div className="rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
-            <p>⚠️ Esta simulação é apenas uma estimativa. Despesas operacionais estimadas em 25% da receita. Valores reais podem variar.</p>
+            <p>⚠️ Simulação estimada. Despesas operacionais configuradas em {expenseRate}% da receita. Valores reais podem variar.</p>
           </div>
         </div>
       </div>
