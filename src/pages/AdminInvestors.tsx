@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { PiggyBank, UserPlus, Trash2, Loader2, Eye, EyeOff, ShieldAlert, DollarSign, Percent } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PiggyBank, UserPlus, Trash2, Loader2, Eye, EyeOff, ShieldAlert, DollarSign, Percent, Pencil, User, Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface InvestorRow {
@@ -15,6 +16,7 @@ interface InvestorRow {
   status: string;
   email: string;
   full_name: string;
+  initial_password: string | null;
 }
 
 export default function AdminInvestors() {
@@ -25,6 +27,10 @@ export default function AdminInvestors() {
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [editingInvestor, setEditingInvestor] = useState<InvestorRow | null>(null);
+  const [editForm, setEditForm] = useState({ invested_amount: "", participation_percentage: "" });
+  const [saving, setSaving] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [form, setForm] = useState({
     full_name: "",
     email: "",
@@ -36,7 +42,7 @@ export default function AdminInvestors() {
   const fetchInvestors = async () => {
     setLoading(true);
     const { data: invs } = await supabase.from("investors").select("*");
-    const { data: profiles } = await supabase.from("profiles").select("id, email, full_name");
+    const { data: profiles } = await supabase.from("profiles").select("id, email, full_name, initial_password");
 
     if (invs && profiles) {
       const profileMap = Object.fromEntries(profiles.map((p) => [p.id, p]));
@@ -45,6 +51,7 @@ export default function AdminInvestors() {
           ...inv,
           email: profileMap[inv.user_id]?.email ?? "—",
           full_name: profileMap[inv.user_id]?.full_name ?? "—",
+          initial_password: profileMap[inv.user_id]?.initial_password ?? null,
         }))
       );
     }
@@ -59,7 +66,6 @@ export default function AdminInvestors() {
     e.preventDefault();
     setCreating(true);
     try {
-      // Create user via edge function with investor role
       const res = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`,
         {
@@ -79,7 +85,6 @@ export default function AdminInvestors() {
       const data = await res.json();
       if (!res.ok || data.error) throw new Error(data.error || "Erro ao criar investidor");
 
-      // Create investor record
       const { error: invError } = await supabase.from("investors").insert({
         user_id: data.user.id,
         invested_amount: Number(form.invested_amount) || 0,
@@ -103,11 +108,40 @@ export default function AdminInvestors() {
     if (error) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } else {
-      // Also remove role
       await supabase.from("user_roles").delete().eq("user_id", inv.user_id);
       toast({ title: "Investidor removido" });
       setInvestors((prev) => prev.filter((i) => i.id !== inv.id));
     }
+  };
+
+  const handleEdit = (inv: InvestorRow) => {
+    setEditingInvestor(inv);
+    setEditForm({
+      invested_amount: String(inv.invested_amount),
+      participation_percentage: String(inv.participation_percentage),
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingInvestor) return;
+    setSaving(true);
+    const { error } = await supabase.from("investors").update({
+      invested_amount: Number(editForm.invested_amount),
+      participation_percentage: Number(editForm.participation_percentage),
+    }).eq("id", editingInvestor.id);
+
+    if (error) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Investidor atualizado!" });
+      setEditingInvestor(null);
+      await fetchInvestors();
+    }
+    setSaving(false);
+  };
+
+  const togglePasswordVisibility = (id: string) => {
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   if (!isAdmin) {
@@ -143,68 +177,28 @@ export default function AdminInvestors() {
             <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">Nome Completo</label>
-                <Input
-                  placeholder="Nome do investidor"
-                  value={form.full_name}
-                  onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-                  required
-                />
+                <Input placeholder="Nome do investidor" value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} required />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">Email</label>
-                <Input
-                  type="email"
-                  placeholder="investidor@email.com"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                />
+                <Input type="email" placeholder="investidor@email.com" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">Senha</label>
                 <div className="relative">
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Mínimo 6 caracteres"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    required
-                    minLength={6}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
+                  <Input type={showPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required minLength={6} className="pr-10" />
+                  <button type="button" className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" onClick={() => setShowPassword(!showPassword)}>
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">Valor Investido (R$)</label>
-                <Input
-                  type="number"
-                  placeholder="10000"
-                  value={form.invested_amount}
-                  onChange={(e) => setForm({ ...form, invested_amount: e.target.value })}
-                  required
-                  min={0}
-                  step={0.01}
-                />
+                <Input type="number" placeholder="10000" value={form.invested_amount} onChange={(e) => setForm({ ...form, invested_amount: e.target.value })} required min={0} step={0.01} />
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-foreground">Participação (%)</label>
-                <Input
-                  type="number"
-                  placeholder="30"
-                  value={form.participation_percentage}
-                  onChange={(e) => setForm({ ...form, participation_percentage: e.target.value })}
-                  required
-                  min={0}
-                  max={100}
-                  step={0.1}
-                />
+                <Input type="number" placeholder="30" value={form.participation_percentage} onChange={(e) => setForm({ ...form, participation_percentage: e.target.value })} required min={0} max={100} step={0.1} />
               </div>
               <div className="flex items-end gap-3">
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
@@ -244,9 +238,14 @@ export default function AdminInvestors() {
                       <p className="text-sm text-muted-foreground">{inv.email}</p>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(inv)}>
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => handleEdit(inv)} title="Editar">
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(inv)} title="Excluir">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between rounded-lg bg-muted/50 px-3 py-2">
@@ -257,12 +256,56 @@ export default function AdminInvestors() {
                     <span className="text-sm text-muted-foreground flex items-center gap-1.5"><Percent className="h-3.5 w-3.5" /> Participação</span>
                     <span className="font-semibold text-primary">{inv.participation_percentage}%</span>
                   </div>
+                  {/* Credenciais */}
+                  <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5"><User className="h-3 w-3" /> Usuário</span>
+                      <span className="text-xs font-mono text-foreground">{inv.email}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1.5"><Lock className="h-3 w-3" /> Senha</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-mono text-foreground">
+                          {visiblePasswords[inv.id] ? (inv.initial_password || "—") : "••••••"}
+                        </span>
+                        <button onClick={() => togglePasswordVisibility(inv.id)} className="text-muted-foreground hover:text-foreground">
+                          {visiblePasswords[inv.id] ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingInvestor} onOpenChange={() => setEditingInvestor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Investidor — {editingInvestor?.full_name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Valor Investido (R$)</label>
+              <Input type="number" value={editForm.invested_amount} onChange={(e) => setEditForm({ ...editForm, invested_amount: e.target.value })} min={0} step={0.01} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Participação (%)</label>
+              <Input type="number" value={editForm.participation_percentage} onChange={(e) => setEditForm({ ...editForm, participation_percentage: e.target.value })} min={0} max={100} step={0.1} />
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setEditingInvestor(null)}>Cancelar</Button>
+              <Button onClick={handleSaveEdit} disabled={saving} className="gap-2">
+                {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+                Salvar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
