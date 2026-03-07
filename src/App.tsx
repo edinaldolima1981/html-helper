@@ -33,6 +33,8 @@ import InvestorSimulator from "./pages/InvestorSimulator";
 import InvestorAudit from "./pages/InvestorAudit";
 import AdminInvestors from "./pages/AdminInvestors";
 import AdminExpenses from "./pages/AdminExpenses";
+import InvestorMap from "./pages/InvestorMap";
+import InvestorRanking from "./pages/InvestorRanking";
 
 const queryClient = new QueryClient();
 

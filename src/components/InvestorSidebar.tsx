@@ -1,16 +1,9 @@
-import { LayoutDashboard, Receipt, Server, FileText, Calculator, Shield, LogOut, TrendingUp } from "lucide-react";
+import { LayoutDashboard, Receipt, Server, FileText, Calculator, Shield, LogOut, TrendingUp, MapPin, Trophy } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
-  SidebarFooter,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu,
+  SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
 } from "@/components/ui/sidebar";
 
 const investorItems = [
@@ -18,7 +11,9 @@ const investorItems = [
   { title: "Extrato", url: "/investor/extrato", icon: Receipt },
   { title: "Equipamentos", url: "/investor/equipments", icon: Server },
   { title: "Despesas", url: "/investor/expenses", icon: FileText },
+  { title: "Mapa de Expansão", url: "/investor/map", icon: MapPin },
   { title: "Simulador", url: "/investor/simulator", icon: Calculator },
+  { title: "Ranking", url: "/investor/ranking", icon: Trophy },
   { title: "Auditoria", url: "/investor/audit", icon: Shield },
 ];
 
