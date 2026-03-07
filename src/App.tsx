@@ -73,7 +73,9 @@ const App = () => (
             <Route path="/investor/extrato" element={<ProtectedRoute><InvestorLayout><InvestorExtrato /></InvestorLayout></ProtectedRoute>} />
             <Route path="/investor/equipments" element={<ProtectedRoute><InvestorLayout><InvestorEquipments /></InvestorLayout></ProtectedRoute>} />
             <Route path="/investor/expenses" element={<ProtectedRoute><InvestorLayout><InvestorExpenses /></InvestorLayout></ProtectedRoute>} />
+            <Route path="/investor/map" element={<ProtectedRoute><InvestorLayout><InvestorMap /></InvestorLayout></ProtectedRoute>} />
             <Route path="/investor/simulator" element={<ProtectedRoute><InvestorLayout><InvestorSimulator /></InvestorLayout></ProtectedRoute>} />
+            <Route path="/investor/ranking" element={<ProtectedRoute><InvestorLayout><InvestorRanking /></InvestorLayout></ProtectedRoute>} />
             <Route path="/investor/audit" element={<ProtectedRoute><InvestorLayout><InvestorAudit /></InvestorLayout></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
