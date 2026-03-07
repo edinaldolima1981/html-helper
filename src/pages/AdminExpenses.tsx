@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Plus, Trash2, Loader2, ShieldAlert, Upload, Package } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileText, Plus, Trash2, Loader2, ShieldAlert, Upload, Package, Eye, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AdminExpenses() {
@@ -17,6 +18,8 @@ export default function AdminExpenses() {
   const [creating, setCreating] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [zoom, setZoom] = useState(1);
   const [form, setForm] = useState({
     date: new Date().toISOString().split("T")[0],
     supplier: "",
@@ -216,9 +219,16 @@ export default function AdminExpenses() {
                     R$ {Number(exp.total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </span>
                   {exp.document_url && (
-                    <a href={exp.document_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline text-sm">
-                      Ver doc
-                    </a>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => { setZoom(1); setPreviewUrl(exp.document_url); }} title="Visualizar">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="icon" className="h-8 w-8" asChild title="Baixar">
+                        <a href={exp.document_url} target="_blank" rel="noopener noreferrer" download>
+                          <Download className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
                   )}
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDelete(exp.id)}>
                     <Trash2 className="h-4 w-4" />
@@ -229,6 +239,43 @@ export default function AdminExpenses() {
           ))}
         </div>
       )}
+
+      {/* Document Preview Dialog */}
+      <Dialog open={!!previewUrl} onOpenChange={() => setPreviewUrl(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <div className="flex items-center justify-between">
+              <DialogTitle>Comprovante</DialogTitle>
+              {previewUrl && !previewUrl.endsWith(".pdf") && (
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.max(z - 0.25, 0.5))}>-</Button>
+                  <span className="text-sm text-muted-foreground">{Math.round(zoom * 100)}%</span>
+                  <Button variant="outline" size="sm" onClick={() => setZoom(z => Math.min(z + 0.25, 3))}>+</Button>
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={previewUrl} target="_blank" rel="noopener noreferrer" download>
+                      <Download className="h-4 w-4 mr-1" /> Baixar
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogHeader>
+          {previewUrl && (
+            previewUrl.endsWith(".pdf") ? (
+              <iframe src={previewUrl} className="w-full h-[70vh] rounded-lg" />
+            ) : (
+              <div className="overflow-auto max-h-[70vh] flex items-center justify-center">
+                <img
+                  src={previewUrl}
+                  alt="Comprovante"
+                  className="rounded-lg transition-transform duration-200"
+                  style={{ transform: `scale(${zoom})`, transformOrigin: "center center" }}
+                />
+              </div>
+            )
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
