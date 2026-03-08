@@ -406,6 +406,63 @@ export type Database = {
         }
         Relationships: []
       }
+      mikrotik_routers: {
+        Row: {
+          api_type: string
+          created_at: string
+          firmware_version: string | null
+          id: string
+          ip_address: string
+          last_seen_at: string | null
+          model: string | null
+          name: string
+          notes: string | null
+          password: string
+          port: number
+          serial_number: string | null
+          status: string
+          updated_at: string
+          uptime: string | null
+          username: string
+        }
+        Insert: {
+          api_type?: string
+          created_at?: string
+          firmware_version?: string | null
+          id?: string
+          ip_address: string
+          last_seen_at?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          password?: string
+          port?: number
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          uptime?: string | null
+          username?: string
+        }
+        Update: {
+          api_type?: string
+          created_at?: string
+          firmware_version?: string | null
+          id?: string
+          ip_address?: string
+          last_seen_at?: string | null
+          model?: string | null
+          name?: string
+          notes?: string | null
+          password?: string
+          port?: number
+          serial_number?: string | null
+          status?: string
+          updated_at?: string
+          uptime?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           created_at: string
