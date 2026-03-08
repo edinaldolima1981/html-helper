@@ -1,4 +1,4 @@
-import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact, TrendingUp, UsersRound, Settings, CreditCard, FileText, PiggyBank } from "lucide-react";
+import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact, TrendingUp, UsersRound, Settings, CreditCard, FileText, PiggyBank, Network } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
