@@ -24,6 +24,7 @@ const commonItems = [
   { title: "Dispositivos", url: "/devices", icon: Smartphone },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageSquare },
   { title: "Planos", url: "/plans", icon: CreditCard },
+  { title: "MikroTik", url: "/mikrotik", icon: Network },
 ];
 
 const adminItems = [

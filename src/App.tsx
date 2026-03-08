@@ -68,6 +68,7 @@ const App = () => (
             <Route path="/plans" element={<ProtectedRoute><AppLayout><Plans /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/investors" element={<ProtectedRoute><AppLayout><AdminInvestors /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/expenses" element={<ProtectedRoute><AppLayout><AdminExpenses /></AppLayout></ProtectedRoute>} />
+            <Route path="/mikrotik" element={<ProtectedRoute><AppLayout><MikrotikRouters /></AppLayout></ProtectedRoute>} />
 
             {/* Investor routes */}
             <Route path="/investor" element={<ProtectedRoute><InvestorLayout><InvestorDashboard /></InvestorLayout></ProtectedRoute>} />
