@@ -35,6 +35,7 @@ import AdminInvestors from "./pages/AdminInvestors";
 import AdminExpenses from "./pages/AdminExpenses";
 import InvestorMap from "./pages/InvestorMap";
 import InvestorRanking from "./pages/InvestorRanking";
+import MikrotikRouters from "./pages/MikrotikRouters";
 
 const queryClient = new QueryClient();
 
