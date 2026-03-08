@@ -35,6 +35,7 @@ import AdminInvestors from "./pages/AdminInvestors";
 import AdminExpenses from "./pages/AdminExpenses";
 import InvestorMap from "./pages/InvestorMap";
 import InvestorRanking from "./pages/InvestorRanking";
+import MikrotikRouters from "./pages/MikrotikRouters";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +68,7 @@ const App = () => (
             <Route path="/plans" element={<ProtectedRoute><AppLayout><Plans /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/investors" element={<ProtectedRoute><AppLayout><AdminInvestors /></AppLayout></ProtectedRoute>} />
             <Route path="/admin/expenses" element={<ProtectedRoute><AppLayout><AdminExpenses /></AppLayout></ProtectedRoute>} />
+            <Route path="/mikrotik" element={<ProtectedRoute><AppLayout><MikrotikRouters /></AppLayout></ProtectedRoute>} />
 
             {/* Investor routes */}
             <Route path="/investor" element={<ProtectedRoute><InvestorLayout><InvestorDashboard /></InvestorLayout></ProtectedRoute>} />

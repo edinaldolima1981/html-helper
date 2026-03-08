@@ -1,4 +1,4 @@
-import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact, TrendingUp, UsersRound, Settings, CreditCard, FileText, PiggyBank } from "lucide-react";
+import { LayoutDashboard, Server, Smartphone, MessageSquare, LogOut, Wifi, UserPlus, Users, ClipboardList, Contact, TrendingUp, UsersRound, Settings, CreditCard, FileText, PiggyBank, Network } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -24,6 +24,7 @@ const commonItems = [
   { title: "Dispositivos", url: "/devices", icon: Smartphone },
   { title: "WhatsApp", url: "/whatsapp", icon: MessageSquare },
   { title: "Planos", url: "/plans", icon: CreditCard },
+  { title: "MikroTik", url: "/mikrotik", icon: Network },
 ];
 
 const adminItems = [
